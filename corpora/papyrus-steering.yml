@@ -1,0 +1,14 @@
+schemaVersion: 1
+publication:
+  name: Papyrus
+canonicalTopicSet:
+  corpusKey: p-apyr-us
+  classifierId: p-apyr-us
+corpora:
+- key: p-apyr-us
+  name: Papyrus Information Systems Corpus
+  path: corpora/p-apyr-us
+  role: canonical
+  localClassifiers:
+  - classifierId: p-apyr-us
+    label: Information Systems Topics

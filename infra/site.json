@@ -1,0 +1,30 @@
+{
+  "siteId": "p-apyr-us",
+  "stackName": "amplify-app-shell-p-apyr-us-cms",
+  "repository": "https://github.com/AnthusAI/p.apyr.us",
+  "brand": "p-apyr-us",
+  "frontend": "pretext",
+  "hostedZoneId": "Z10285921B1G7MVRV06W9",
+  "papyrusVersion": "1.0.0-next.31",
+  "cms": {
+    "domainName": "apyr.us",
+    "domainPrefix": "p",
+    "stagingDomainPrefix": "p-staging",
+    "redirects": [{ "source": "apyr.us", "status": 301 }],
+    "cognitoDomainPrefix": "papyrus-p-apyr-us",
+    "applyCognitoDomainPrefix": true,
+    "environment": {
+      "PAPYRUS_EDITION_SLUG": "current",
+      "PAPYRUS_ENABLE_CONSOLE_RESPONDER": "false",
+      "PAPYRUS_ENABLE_SLACK": "false",
+      "PAPYRUS_ENABLE_INBOUND_EMAIL": "true",
+      "PAPYRUS_ENABLE_STORAGE_BACKUPS": "true",
+      "PAPYRUS_OAUTH_REDIRECT_URLS": "http://localhost:3001/,http://localhost:3001/newsroom,https://p.apyr.us/,https://p.apyr.us/newsroom,https://p-staging.apyr.us/,https://p-staging.apyr.us/newsroom"
+    }
+  },
+  "github": {
+    "owner": "AnthusAI",
+    "repo": "p.apyr.us",
+    "ciCanDeployInfra": false
+  }
+}
