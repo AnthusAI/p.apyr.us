@@ -19,7 +19,7 @@
       "PAPYRUS_ENABLE_SLACK": "false",
       "PAPYRUS_ENABLE_INBOUND_EMAIL": "true",
       "PAPYRUS_ENABLE_STORAGE_BACKUPS": "true",
-      "PAPYRUS_OAUTH_REDIRECT_URLS": "http://localhost:3001/,http://localhost:3001/newsroom,https://p.apyr.us/,https://p.apyr.us/newsroom,https://p-staging.apyr.us/,https://p-staging.apyr.us/newsroom"
+      "PAPYRUS_OAUTH_REDIRECT_URLS": "https://main.ds6yswxui41yi.amplifyapp.com/newsroom,https://main.ds6yswxui41yi.amplifyapp.com/,http://localhost:3001/,http://localhost:3001/newsroom,https://p.apyr.us/,https://p.apyr.us/newsroom,https://p-staging.apyr.us/,https://p-staging.apyr.us/newsroom"
     }
   },
   "github": {

@@ -39,6 +39,8 @@ export default defineSite({
       cognitoDomainPrefix: "papyrus-p-apyr-us",
       applyCognitoDomainPrefix: true,
       redirectUrls: [
+        "https://main.ds6yswxui41yi.amplifyapp.com/newsroom",
+        "https://main.ds6yswxui41yi.amplifyapp.com/",
         "http://localhost:3001/",
         "http://localhost:3001/newsroom",
         "https://p.apyr.us/",
