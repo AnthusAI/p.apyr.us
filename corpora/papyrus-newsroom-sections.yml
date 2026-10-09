@@ -1,0 +1,23 @@
+schemaVersion: 1
+sections:
+  - id: information-systems
+    title: Information Systems
+    shortTitle: Information About Information Systems
+    type: canonical
+    editorialMission: Explain how information systems work, change, and fail, for readers who build or depend on them.
+    editorialPolicy: Publish clear, sourced explanations of information systems. Prefer primary documentation and inspectable evidence over commentary.
+    assignmentGuidance: Start from a specific system or change. Name what it does, what changed, and what a reader can verify.
+    killCriteria: Reject pieces that restate hype without an inspectable claim.
+    enabled: true
+    sortOrder: 1
+
+  - id: source-intake
+    title: Source Intake
+    shortTitle: Intake Queue
+    type: floating
+    editorialMission: Curate incoming source material before it enters the accepted knowledge base.
+    editorialPolicy: Intake reviews source provenance and topic fit.
+    assignmentGuidance: Bind each intake packet to a topic scope and an explicit accept or reject rationale.
+    killCriteria: Reject intake without a traceable source.
+    enabled: true
+    sortOrder: 2

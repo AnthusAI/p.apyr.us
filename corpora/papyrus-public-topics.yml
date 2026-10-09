@@ -1,0 +1,7 @@
+schemaVersion: 1
+topics:
+  - key: information-systems
+    title: Information Systems
+    shortTitle: Information Systems
+    description: How information systems work, change, and fail, explained with sources a reader can check.
+    rank: 1
