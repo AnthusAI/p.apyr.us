@@ -54,7 +54,7 @@ export default defineSite({
       consoleResponder: false,
       inboundEmail: true,
       slack: false,
-      storageBackups: false,
+      storageBackups: true,
     },
   },
 });
