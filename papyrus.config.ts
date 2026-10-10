@@ -47,6 +47,8 @@ export default defineSite({
         "https://p.apyr.us/newsroom",
         "https://p-staging.apyr.us/",
         "https://p-staging.apyr.us/newsroom",
+        "https://staging.ds6yswxui41yi.amplifyapp.com/",
+        "https://staging.ds6yswxui41yi.amplifyapp.com/newsroom",
       ],
     },
     stagingBuild: { enabled: true },
