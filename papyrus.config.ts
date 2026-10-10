@@ -52,7 +52,7 @@ export default defineSite({
     stagingBuild: { enabled: true },
     features: {
       consoleResponder: false,
-      inboundEmail: true,
+      inboundEmail: false,
       slack: false,
       storageBackups: true,
     },
