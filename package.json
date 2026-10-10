@@ -10,7 +10,7 @@
     "test": "node tests/test-legacy-redirects.mjs && node tests/test-marketing-pricing.mjs"
   },
   "dependencies": {
-    "@anthusai/papyrus": "1.0.0-next.37",
+    "@anthusai/papyrus": "1.0.0-next.39",
     "@aws-amplify/backend": "^1.22.0",
     "@aws-amplify/backend-cli": "^1.8.2",
     "@aws-amplify/seed": "^1.1.2",
