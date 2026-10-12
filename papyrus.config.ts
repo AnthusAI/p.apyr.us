@@ -30,10 +30,13 @@ const pApyrUsBrand: SiteBrand = {
   publicationName: "Papyrus",
 };
 
+const revalidateSecretParameterIsConfigured = (process.env.PAPYRUS_REVALIDATE_SECRET_PARAMETER ?? "").trim().startsWith("/");
+
 export default defineSite({
   brands: [pApyrUsBrand],
   defaultBrand: "p-apyr-us",
   backend: {
+    revalidateBaseUrl: revalidateSecretParameterIsConfigured ? "https://p.apyr.us" : undefined,
     brandId: "p-apyr-us",
     auth: {
       cognitoDomainPrefix: "papyrus-p-apyr-us",
