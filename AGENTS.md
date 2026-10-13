@@ -6,7 +6,7 @@ This repository holds only what is specific to the Papyrus product site and news
 
 - `papyrus.config.ts`: the brand (newsprint newspaper), `readerBasePath: "/information"`, and the backend options (`defineSite`).
 - `app/page.tsx`: the site-owned marketing root. `papyrus-app sync` leaves it alone.
-- `components/marketing/`: marketing page, pricing tiers, design-only wait-list form, and `marketing.css`, every rule scoped under `.papyrus-marketing` so the shared Papyrus root layout styles do not leak in or out.
+- `components/marketing/`: marketing page, pricing tiers, wait-list form (hidden behind `SHOW_WAITLIST` in `MarketingPage.tsx` until a real waitlist system exists), and `marketing.css`, every rule scoped under `.papyrus-marketing` so the shared Papyrus root layout styles do not leak in or out.
 - `legacyRedirects.mjs`, `next.config.mjs`: permanent redirects from the old newspaper paths to `/information`.
 - `features/`: Gherkin for the redirects and the marketing site. `tests/` implements them (`npm test`).
 - `corpora/`: the small configuration files the reader reads at runtime.

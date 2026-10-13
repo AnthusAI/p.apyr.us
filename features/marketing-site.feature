@@ -9,9 +9,9 @@ Feature: Papyrus marketing site at the root
     Given the marketing page
     Then it links to the newspaper at "/information" and to the source on GitHub
 
-  Scenario: The waitlist is design only
-    Given the waitlist form
-    Then it makes no network request and says submissions are not connected
+  Scenario: The waitlist is hidden
+    Given the marketing page
+    Then the waitlist form and every link to it are omitted until a real waitlist system exists
 
   Scenario: The marketing styles are scoped
     Given the marketing stylesheet

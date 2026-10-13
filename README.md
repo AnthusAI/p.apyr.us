@@ -2,7 +2,7 @@
 
 The Papyrus product site and newspaper.
 
-- `/` is the marketing site: what Papyrus is, the four-tier pricing ladder, and a design-only wait-list form.
+- `/` is the marketing site: what Papyrus is, the four-tier pricing ladder, and no wait-list form yet (hidden behind `SHOW_WAITLIST` in `components/marketing/MarketingPage.tsx` until a real waitlist system exists).
 - `/information` is the newspaper (Information about information systems), mounted by `readerBasePath` in `papyrus.config.ts`.
 - `/newsroom` is the staff newsroom app.
 - Old newspaper paths (`/YYYY/<month>/DD...`, `/articles/<slug>`, `/archive`, `/settings`) redirect permanently to `/information/...`. The rules live in `legacyRedirects.mjs`.

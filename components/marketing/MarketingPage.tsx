@@ -2,6 +2,9 @@ import { pricingQuestions, pricingTiers } from "./pricingTiers";
 import { Waitlist } from "./Waitlist";
 import "./marketing.css";
 
+// Turn on when a real waitlist backend exists. While false, the form and every link to it are omitted.
+const SHOW_WAITLIST = false;
+
 const stages = [
   { number: "I", title: "Watch the beat", text: "Research agents monitor the sources you choose and surface developments that belong in your publication, not whatever happens to be loud today." },
   { number: "II", title: "Build the memory", text: "References, people, organizations, claims, and relationships become a reviewed knowledge base that gets more useful with every reporting cycle." },
@@ -51,7 +54,7 @@ export function MarketingPage() {
             <div className="pm-actions">
               <a className="pm-button pm-button-primary" href="/information">Read the newspaper</a>
               <a className="pm-button" href="https://github.com/AnthusAI/Papyrus">Clone Papyrus on GitHub</a>
-              <a className="pm-button" href="#waitlist">Join the wait-list</a>
+              {SHOW_WAITLIST ? <a className="pm-button" href="#waitlist">Join the wait-list</a> : null}
             </div>
           </div>
           <div className="pm-proof">
@@ -117,7 +120,7 @@ export function MarketingPage() {
           </div>
         </section>
 
-        <Waitlist />
+        {SHOW_WAITLIST ? <Waitlist /> : null}
       </main>
 
       <footer className="pm-footer">
