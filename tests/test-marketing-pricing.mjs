@@ -24,4 +24,5 @@ const page = fs.readFileSync(new URL("../components/marketing/MarketingPage.tsx"
 assert.ok(page.includes('href="/information"'));
 assert.ok(page.includes("https://github.com/AnthusAI/Papyrus"));
 assert.ok(!/fetch\(/.test(fs.readFileSync(new URL("../components/marketing/Waitlist.tsx", import.meta.url), "utf8")));
+assert.ok(page.includes("const SHOW_WAITLIST = false;"), "waitlist must stay hidden until a real backend exists");
 console.log("marketing: ok");
