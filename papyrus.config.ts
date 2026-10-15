@@ -23,6 +23,7 @@ const pApyrUsBrand: SiteBrand = {
   hosting: { kind: "amplify-ssr" },
   readerBasePath: "/information",
   opsChrome: "app",
+  newsroomLayout: "organizer",
   corpusKey: "p-apyr-us",
   steeringConfigPath: "corpora/papyrus-steering.yml",
   newsroomSectionsConfigPath: "corpora/papyrus-newsroom-sections.yml",
