@@ -5,6 +5,7 @@ backend:
       commands:
         - test "$AWS_APP_ID" = "ds6yswxui41yi"
         - npm ci --cache .npm --prefer-offline
+        - npm update anthus-footer
         - npx ampx generate outputs --branch main --app-id $AWS_APP_ID
 frontend:
   phases:
