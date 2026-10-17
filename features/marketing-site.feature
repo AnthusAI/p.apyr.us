@@ -1,9 +1,19 @@
 Feature: Papyrus marketing site at the root
   The root page of p.apyr.us explains Papyrus and offers four ways to adopt it.
 
-  Scenario: The four-tier pricing ladder
-    Given the marketing pricing tiers
-    Then they are, in order, "Fork it" at "No cost", "Self-setup, managed" at "$20 a month", "Assisted setup, managed" at "$20 a month" with "and $100 once", and "Professional services" at "Quoted"
+  Scenario: The shared four-rung pricing ladder
+    Given the marketing pricing tiers in one data file
+    Then they are, in order, "Open source" at "Free", "Hosted" at "$20/mo" per publication, "Dedicated" at "$300/mo" with "$1,000 once" onboarding, and "Engagement" at "From $2,500/mo"
+    And every tier records its product, rung, title, price, availability and call to action
+
+  Scenario: Availability chips come from the data file
+    Given the "Hosted" tier is marked early-access
+    Then its card shows an "Early access" chip, a "Request access" call to action pointing at https://anth.us/engage/, and its price is qualified as planned
+    And available tiers show no chip
+
+  Scenario: The shared payment answers
+    Given the pricing questions
+    Then they explain who pays for what on each rung and what happens when you stop paying
 
   Scenario: Links
     Given the marketing page
