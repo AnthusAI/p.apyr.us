@@ -1,5 +1,5 @@
 import AnthusFooter from "anthus-footer";
-import { pricingQuestions, pricingTiers } from "./pricingTiers";
+import { availabilityPresentation, describeTierCallToAction, describeTierFootnote, describeTierPrice, pricingQuestions, pricingTiers } from "./pricingTiers";
 import { Waitlist } from "./Waitlist";
 import "./marketing.css";
 
@@ -98,19 +98,31 @@ export function MarketingPage() {
             <p className="pm-kicker">Delegated responsibility</p>
             <h2 id="pricing-title" className="pm-heading">You choose how much we help</h2>
             <p className="pm-lede">
-              You can run the whole stack yourself. If you want help, we can operate it, set it up with you, or adapt a deployment to what you need.
+              You can run the whole stack yourself. If you want help, we can host a publication for you, operate a dedicated deployment in your account, or build a newsroom to your scope.
             </p>
             <div className="pm-pricing-grid">
-              {pricingTiers.map((tier) => (
-                <div key={tier.title} className="pm-card pm-tier">
-                  <h3>{tier.title}</h3>
-                  <p>{tier.body}</p>
-                  <div className="pm-tier-price">
-                    <span>{tier.price}</span>
-                    {tier.note ? <small>{tier.note}</small> : null}
+              {pricingTiers.map((tier) => {
+                const chip = availabilityPresentation[tier.availability].chip;
+                const price = describeTierPrice(tier);
+                const callToAction = describeTierCallToAction(tier);
+                const footnote = describeTierFootnote(tier);
+                return (
+                  <div key={tier.rung} className="pm-card pm-tier">
+                    <div className="pm-tier-header">
+                      <h3>{tier.title}</h3>
+                      {chip ? <span className="pm-chip">{chip}</span> : null}
+                    </div>
+                    <p>{tier.body}</p>
+                    {tier.note ? <p className="pm-tier-note">{tier.note}</p> : null}
+                    <div className="pm-tier-price">
+                      <span>{price.headline}</span>
+                      {price.details.length > 0 ? <small>{price.details.join(", ")}</small> : null}
+                    </div>
+                    {footnote ? <p className="pm-tier-footnote">{footnote}</p> : null}
+                    <a className="pm-button pm-tier-cta" href={callToAction.href}>{callToAction.label}</a>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </section>
