@@ -1,3 +1,4 @@
+import AnthusFooter from "anthus-footer";
 import { pricingQuestions, pricingTiers } from "./pricingTiers";
 import { Waitlist } from "./Waitlist";
 import "./marketing.css";
@@ -24,6 +25,15 @@ const frequentlyAsked = [
   ...pricingQuestions,
   { question: "Where can I see it working?", answer: "This site is a Papyrus publication. The newspaper lives at /information, and the newsroom behind it at /newsroom." },
 ];
+
+const papyrusFooterTheme = {
+  background: "var(--pm-ink)",
+  groupedBackground: "#2c2f22",
+  foreground: "var(--pm-papyrus)",
+  mutedForeground: "var(--pm-sand)",
+  link: "var(--pm-papyrus)",
+  maxWidth: "78rem",
+};
 
 export function MarketingPage() {
   return (
@@ -123,18 +133,21 @@ export function MarketingPage() {
         {SHOW_WAITLIST ? <Waitlist /> : null}
       </main>
 
-      <footer className="pm-footer">
-        <div className="pm-container pm-footer-grid">
-          <p className="pm-wordmark"><span>Papyrus</span></p>
-          <p>An open-source newsroom system, stewarded by Anthus AI Solutions.</p>
-          <p className="pm-footer-links">
-            <a href="/information">Newspaper</a>
-            <a href="#pricing">Pricing</a>
-            <a href="https://github.com/AnthusAI/Papyrus">GitHub</a>
-            <a href="https://anth.us">Anthus AI Solutions</a>
-          </p>
-        </div>
-      </footer>
+      <AnthusFooter
+        siteId="papyrus"
+        description="An open-source newsroom system, stewarded by Anthus AI Solutions."
+        additionalColumns={[
+          {
+            title: "Papyrus",
+            links: [
+              { label: "Newspaper", href: "/information", external: false },
+              { label: "Pricing", href: "#pricing", external: false },
+              { label: "GitHub", href: "https://github.com/AnthusAI/Papyrus" },
+            ],
+          },
+        ]}
+        theme={papyrusFooterTheme}
+      />
     </div>
   );
 }

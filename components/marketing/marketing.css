@@ -129,8 +129,3 @@
 .papyrus-marketing .pm-form .pm-button { margin-top: 1rem; justify-content: center; }
 .papyrus-marketing .pm-note { font-size: 0.8rem; color: var(--pm-muted); margin-top: 0.75rem; }
 .papyrus-marketing .pm-status { margin-top: 0.75rem; padding: 0.75rem 1rem; border-radius: 0.75rem; background: var(--pm-reed); color: var(--pm-papyrus); font-weight: 700; }
-
-.papyrus-marketing .pm-footer { padding: 3rem 0; background: var(--pm-ink); color: var(--pm-papyrus); }
-.papyrus-marketing .pm-footer-grid { display: grid; gap: 1.25rem; font-size: 0.9rem; }
-@media (min-width: 768px) { .papyrus-marketing .pm-footer-grid { grid-template-columns: 1fr 2fr auto; align-items: center; } }
-.papyrus-marketing .pm-footer-links { display: flex; gap: 1.25rem; flex-wrap: wrap; }
