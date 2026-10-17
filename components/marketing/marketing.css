@@ -110,7 +110,12 @@
 .papyrus-marketing .pm-card h3 { font-size: 1.6rem; }
 .papyrus-marketing .pm-card p { color: var(--pm-muted); }
 .papyrus-marketing .pm-numeral { font-family: Georgia, serif; font-size: 2.6rem; font-style: italic; color: var(--pm-oxide); line-height: 1; }
-.papyrus-marketing .pm-tier p { flex: 1; }
+.papyrus-marketing .pm-tier > p:not(.pm-tier-note):not(.pm-tier-footnote) { flex: 1; }
+.papyrus-marketing .pm-tier-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 0.75rem; }
+.papyrus-marketing .pm-chip { flex: none; margin-top: 0.35rem; padding: 0.2rem 0.65rem; border-radius: 999px; background: var(--pm-sand); color: var(--pm-ink); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.04em; text-transform: uppercase; white-space: nowrap; }
+.papyrus-marketing .pm-tier-note { font-size: 0.9rem; }
+.papyrus-marketing .pm-tier-footnote { font-size: 0.8rem; }
+.papyrus-marketing .pm-tier-cta { justify-content: center; margin-top: 0.5rem; }
 .papyrus-marketing .pm-tier-price { display: flex; flex-direction: column; margin-top: 1rem; }
 .papyrus-marketing .pm-tier-price span { font-family: Georgia, serif; font-size: 1.6rem; font-weight: 600; }
 .papyrus-marketing .pm-tier-price small { font-size: 0.9rem; color: var(--pm-muted); }
