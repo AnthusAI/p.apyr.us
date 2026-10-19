@@ -1,4 +1,4 @@
-# Import template: the stack's resources plus the three resources being adopted, with the adopted ones exactly as live (legacy redirect code and associations).
+# Import template: the stack's resources plus the two reader resources being adopted (ReaderEdgeFunction and ReaderDistribution), exactly as live.
 AWSTemplateFormatVersion: '2010-09-09'
 Description: CloudFront edge for p.apyr.us (CMS, marketing and reader) in front of Amplify default domains and the marketing bucket
 Parameters:
@@ -6,16 +6,8 @@ Parameters:
     Type: String
   ReaderCertificateArn:
     Type: String
-  MarketingCertificateArn:
-    Type: String
   AmplifyAppId:
     Type: String
-  MarketingBucketDomainName:
-    Type: String
-    Default: papyrus-web-marketing-712236451410-us-east-1.s3.us-east-1.amazonaws.com
-  MarketingOriginAccessControlId:
-    Type: String
-    Default: E23SVM97AX6ZLI
   ProductionHost:
     Type: String
     Default: p.apyr.us
@@ -111,7 +103,6 @@ Resources:
       DistributionConfig:
         Enabled: true
         Comment: p.apyr.us production
-        Aliases: [!Ref ProductionHost, !Ref ApexHost]
         HttpVersion: http2and3
         IPV6Enabled: true
         ViewerCertificate:
@@ -163,76 +154,6 @@ Resources:
           FunctionAssociations:
             - EventType: viewer-request
               FunctionARN: !GetAtt ForwardHostFunction.FunctionARN
-  MarketingDistribution:
-    Type: AWS::CloudFront::Distribution
-    DeletionPolicy: Retain
-    Properties:
-      Tags:
-        - Key: Project
-          Value: Papyrus-web
-      DistributionConfig:
-        Enabled: true
-        Comment: papyrus-web-marketing-candidate
-        Aliases: [!Ref ProductionHost, !Ref ApexHost]
-        DefaultRootObject: index.html
-        HttpVersion: http2
-        IPV6Enabled: true
-        PriceClass: PriceClass_100
-        ViewerCertificate:
-          AcmCertificateArn: !Ref MarketingCertificateArn
-          SslSupportMethod: sni-only
-          MinimumProtocolVersion: TLSv1.2_2021
-        Origins:
-          - Id: cms-amplify
-            DomainName: !Sub 'main.${AmplifyAppId}.amplifyapp.com'
-            CustomOriginConfig:
-              OriginProtocolPolicy: https-only
-              OriginSSLProtocols: [TLSv1.2]
-          - Id: marketing-s3
-            DomainName: !Ref MarketingBucketDomainName
-            OriginAccessControlId: !Ref MarketingOriginAccessControlId
-            S3OriginConfig:
-              OriginAccessIdentity: ''
-        DefaultCacheBehavior:
-          TargetOriginId: marketing-s3
-          ViewerProtocolPolicy: redirect-to-https
-          Compress: true
-          AllowedMethods: [GET, HEAD]
-          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
-          FunctionAssociations:
-            - EventType: viewer-request
-              FunctionARN: arn:aws:cloudfront::712236451410:function/papyrus-legacy-reader-redirect
-        CacheBehaviors:
-          - PathPattern: /newsroom*
-            TargetOriginId: cms-amplify
-            ViewerProtocolPolicy: redirect-to-https
-            Compress: true
-            AllowedMethods: [GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE]
-            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
-            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
-            FunctionAssociations:
-              - EventType: viewer-request
-                FunctionARN: !GetAtt ForwardHostFunction.FunctionARN
-          - PathPattern: /_next/*
-            TargetOriginId: cms-amplify
-            ViewerProtocolPolicy: redirect-to-https
-            Compress: true
-            AllowedMethods: [GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE]
-            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
-            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
-            FunctionAssociations:
-              - EventType: viewer-request
-                FunctionARN: !GetAtt ForwardHostFunction.FunctionARN
-          - PathPattern: /api/*
-            TargetOriginId: cms-amplify
-            ViewerProtocolPolicy: redirect-to-https
-            Compress: true
-            AllowedMethods: [GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE]
-            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
-            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
-            FunctionAssociations:
-              - EventType: viewer-request
-                FunctionARN: !GetAtt ForwardHostFunction.FunctionARN
   ReaderDistribution:
     Type: AWS::CloudFront::Distribution
     DeletionPolicy: Retain
