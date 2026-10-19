@@ -5,16 +5,8 @@ Parameters:
     Type: String
   ReaderCertificateArn:
     Type: String
-  MarketingCertificateArn:
-    Type: String
   AmplifyAppId:
     Type: String
-  MarketingBucketDomainName:
-    Type: String
-    Default: papyrus-web-marketing-712236451410-us-east-1.s3.us-east-1.amazonaws.com
-  MarketingOriginAccessControlId:
-    Type: String
-    Default: E23SVM97AX6ZLI
   ProductionHost:
     Type: String
     Default: p.apyr.us
@@ -65,27 +57,41 @@ Resources:
       Name: papyrus-reader-edge
       AutoPublish: true
       FunctionConfig:
-        Comment: Send newsroom paths to the CMS host; copy Host to x-forwarded-host; pass everything else through
+        Comment: read.p.apyr.us publication only
         Runtime: cloudfront-js-2.0
-      FunctionCode: !Sub |
+      FunctionCode: |
         function handler(event) {
           var request = event.request;
           var uri = request.uri;
           var host = request.headers.host.value;
-          if (uri === '/newsroom' || uri.indexOf('/newsroom/') === 0) {
-            var query = '';
-            var keys = Object.keys(request.querystring);
-            if (keys.length > 0) {
-              query = '?' + keys.map(function (k) {
-                var q = request.querystring[k];
-                return q.value === '' ? k : k + '=' + q.value;
-              }).join('&');
-            }
+          var keys = Object.keys(request.querystring);
+          var query = '';
+          if (keys.length > 0) {
+            query = '?' + keys.map(function (k) {
+              var q = request.querystring[k];
+              return q.value === '' ? k : k + '=' + q.value;
+            }).join('&');
+          }
+          function redirect(code, location) {
             return {
-              statusCode: 302,
-              statusDescription: 'Found',
-              headers: { location: { value: 'https://${ProductionHost}' + uri + query } }
+              statusCode: code,
+              statusDescription: code === 301 ? 'Moved Permanently' : 'Found',
+              headers: { location: { value: location } }
             };
+          }
+          if (uri === '/' || uri === '/index.html') {
+            return redirect(302, 'https://read.p.apyr.us/information' + query);
+          }
+          if (uri === '/newsroom' || uri.indexOf('/newsroom/') === 0) {
+            return redirect(302, 'https://p.apyr.us' + uri + query);
+          }
+          var publication = uri === '/information' || uri.indexOf('/information/') === 0 ||
+            uri.indexOf('/_next/') === 0 || uri.indexOf('/api/') === 0 ||
+            uri === '/feed.xml' || uri === '/rss.xml' || uri === '/atom.xml' || uri === '/sitemap.xml' ||
+            uri === '/robots.txt' || uri === '/favicon.ico' || uri === '/papyrus-plant.png' ||
+            uri.indexOf('/.well-known/') === 0;
+          if (!publication) {
+            return redirect(302, 'https://read.p.apyr.us/information' + query);
           }
           request.headers['x-forwarded-host'] = { value: host };
           return request;
@@ -147,76 +153,6 @@ Resources:
           FunctionAssociations:
             - EventType: viewer-request
               FunctionARN: !GetAtt ForwardHostFunction.FunctionARN
-  MarketingDistribution:
-    Type: AWS::CloudFront::Distribution
-    DeletionPolicy: Retain
-    Properties:
-      Tags:
-        - Key: Project
-          Value: Papyrus-web
-      DistributionConfig:
-        Enabled: true
-        Comment: papyrus-web-marketing-candidate
-        Aliases: [!Ref ProductionHost, !Ref ApexHost]
-        DefaultRootObject: index.html
-        HttpVersion: http2
-        IPV6Enabled: true
-        PriceClass: PriceClass_100
-        ViewerCertificate:
-          AcmCertificateArn: !Ref MarketingCertificateArn
-          SslSupportMethod: sni-only
-          MinimumProtocolVersion: TLSv1.2_2021
-        Origins:
-          - Id: cms-amplify
-            DomainName: !Sub 'main.${AmplifyAppId}.amplifyapp.com'
-            CustomOriginConfig:
-              OriginProtocolPolicy: https-only
-              OriginSSLProtocols: [TLSv1.2]
-          - Id: marketing-s3
-            DomainName: !Ref MarketingBucketDomainName
-            OriginAccessControlId: !Ref MarketingOriginAccessControlId
-            S3OriginConfig:
-              OriginAccessIdentity: ''
-        DefaultCacheBehavior:
-          TargetOriginId: marketing-s3
-          ViewerProtocolPolicy: redirect-to-https
-          Compress: true
-          AllowedMethods: [GET, HEAD]
-          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
-          FunctionAssociations:
-            - EventType: viewer-request
-              FunctionARN: !GetAtt ForwardHostFunction.FunctionARN
-        CacheBehaviors:
-          - PathPattern: /newsroom*
-            TargetOriginId: cms-amplify
-            ViewerProtocolPolicy: redirect-to-https
-            Compress: true
-            AllowedMethods: [GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE]
-            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
-            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
-            FunctionAssociations:
-              - EventType: viewer-request
-                FunctionARN: !GetAtt ForwardHostFunction.FunctionARN
-          - PathPattern: /_next/*
-            TargetOriginId: cms-amplify
-            ViewerProtocolPolicy: redirect-to-https
-            Compress: true
-            AllowedMethods: [GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE]
-            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
-            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
-            FunctionAssociations:
-              - EventType: viewer-request
-                FunctionARN: !GetAtt ForwardHostFunction.FunctionARN
-          - PathPattern: /api/*
-            TargetOriginId: cms-amplify
-            ViewerProtocolPolicy: redirect-to-https
-            Compress: true
-            AllowedMethods: [GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE]
-            CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
-            OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
-            FunctionAssociations:
-              - EventType: viewer-request
-                FunctionARN: !GetAtt ForwardHostFunction.FunctionARN
   ReaderDistribution:
     Type: AWS::CloudFront::Distribution
     DeletionPolicy: Retain
@@ -252,7 +188,5 @@ Outputs:
     Value: !Ref ProductionDistribution
   StagingDistributionId:
     Value: !Ref StagingDistribution
-  MarketingDistributionId:
-    Value: !Ref MarketingDistribution
   ReaderDistributionId:
     Value: !Ref ReaderDistribution
