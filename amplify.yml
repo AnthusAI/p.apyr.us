@@ -6,6 +6,17 @@ backend:
         - test "$AWS_APP_ID" = "ds6yswxui41yi"
         - npm ci --cache .npm --prefer-offline
         - npm update anthus-footer
+        - >-
+          npx papyrus-infra deploy-edge
+          --stack papyrus-edge-p-apyr-us
+          --template infra/edge/p-apyr-us-edge.yaml
+          --adoption-template infra/edge/p-apyr-us-edge-adoption.yaml
+          --adopt-resources infra/edge/adopt-resources.json
+          --parameter ReaderCertificateArn=arn:aws:acm:us-east-1:712236451410:certificate/5daf7da4-bdc1-42fe-93c4-a4fe2f948805
+          --parameter MarketingCertificateArn=arn:aws:acm:us-east-1:712236451410:certificate/6b83eeb4-ecde-4665-89f0-c480e7877ac4
+          --delete-function papyrus-legacy-reader-redirect
+          --only-branch main
+          --only-app-id ds6yswxui41yi
         - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
 frontend:
   phases:
