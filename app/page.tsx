@@ -23,7 +23,8 @@ const READER_HOST_PREFIX = "read.";
 type RootProps = Parameters<typeof PapyrusReaderHome>[0];
 
 export default async function Root(props: RootProps) {
-  const requestHost = (await headers()).get("host") ?? "";
+  const requestHeaders = await headers();
+  const requestHost = requestHeaders.get("x-forwarded-host") ?? requestHeaders.get("host") ?? "";
   if (requestHost.startsWith(READER_HOST_PREFIX)) return PapyrusReaderHome(props);
   return <MarketingPage />;
 }
