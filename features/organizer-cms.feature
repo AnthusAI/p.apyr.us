@@ -4,7 +4,7 @@ Feature: Full organizer CMS rollout
     When the organizer CMS frontend is released
     Then taxonomy, concepts, knowledge search, curation and administration remain available
     And the original private editing actions retain their permissions
-    And the marketing root and information reader retain their publication configuration
+    And the marketing root and the read.p.apyr.us reader retain their publication configuration
     And no synthetic gateway or classifier is activated
 
   Scenario: A frontend update preserves authentication

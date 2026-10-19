@@ -14,7 +14,6 @@
     "cognitoDomainPrefix": "papyrus-p-apyr-us",
     "applyCognitoDomainPrefix": true,
     "environment": {
-      "PAPYRUS_EDITION_SLUG": "current",
       "PAPYRUS_ENABLE_CONSOLE_RESPONDER": "false",
       "PAPYRUS_ENABLE_SLACK": "false",
       "PAPYRUS_ENABLE_INBOUND_EMAIL": "false",

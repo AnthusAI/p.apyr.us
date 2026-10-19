@@ -1,5 +1,9 @@
 import type { Metadata } from "next";
+import { headers } from "next/headers";
+import PapyrusReaderHome from "@anthusai/papyrus/app/page";
 import { MarketingPage } from "../components/marketing/MarketingPage";
+
+export const dynamic = "force-dynamic";
 
 export const metadata: Metadata = {
   title: "Papyrus: a newsroom with a long memory",
@@ -14,6 +18,12 @@ export const metadata: Metadata = {
   },
 };
 
-export default function MarketingRoot() {
+const READER_HOST_PREFIX = "read.";
+
+type RootProps = Parameters<typeof PapyrusReaderHome>[0];
+
+export default async function Root(props: RootProps) {
+  const requestHost = (await headers()).get("host") ?? "";
+  if (requestHost.startsWith(READER_HOST_PREFIX)) return PapyrusReaderHome(props);
   return <MarketingPage />;
 }

@@ -23,7 +23,7 @@ const frequentlyAsked = [
   { question: "What is Papyrus?", answer: "Papyrus is an open-source publishing and newsroom system for a specific beat. Research agents and human editors monitor sources, maintain a publication-specific knowledge base, prepare reporting packets, review drafts, and publish editions." },
   { question: "Does Papyrus have to run in Anthus infrastructure?", answer: "No. It is designed to run from your AWS account. Your content, data, and infrastructure stay under your control." },
   ...pricingQuestions,
-  { question: "Where can I see it working?", answer: "This site is a Papyrus publication. The newspaper lives at /information, and the newsroom behind it at /newsroom." },
+  { question: "Where can I see it working?", answer: "This site is a Papyrus publication. The newspaper lives at read.p.apyr.us, and the newsroom behind it at /newsroom." },
 ];
 
 const papyrusFooterTheme = {
@@ -48,7 +48,7 @@ export function MarketingPage() {
             <a href="#newsroom">The newsroom</a>
             <a href="#pricing">Pricing</a>
             <a href="#faq">FAQ</a>
-            <a href="/information">Read the newspaper</a>
+            <a href="https://read.p.apyr.us">Read the newspaper</a>
           </div>
         </nav>
       </header>
@@ -62,7 +62,7 @@ export function MarketingPage() {
               Papyrus turns one subject worth following into a living publication. Research agents watch the beat, editors shape the coverage, and every story keeps its sources, concepts, and decisions attached.
             </p>
             <div className="pm-actions">
-              <a className="pm-button pm-button-primary" href="/information">Read the newspaper</a>
+              <a className="pm-button pm-button-primary" href="https://read.p.apyr.us">Read the newspaper</a>
               <a className="pm-button" href="https://github.com/AnthusAI/Papyrus">Clone Papyrus on GitHub</a>
               {SHOW_WAITLIST ? <a className="pm-button" href="#waitlist">Join the wait-list</a> : null}
             </div>
@@ -152,7 +152,7 @@ export function MarketingPage() {
           {
             title: "Papyrus",
             links: [
-              { label: "Newspaper", href: "/information", external: false },
+              { label: "Newspaper", href: "https://read.p.apyr.us", external: true },
               { label: "Pricing", href: "#pricing", external: false },
               { label: "GitHub", href: "https://github.com/AnthusAI/Papyrus" },
             ],

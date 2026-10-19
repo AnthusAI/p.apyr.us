@@ -16,23 +16,36 @@ AGENTS.local.md
 npm-debug.log*
 
 # Generated reader and newsroom shims (papyrus-app sync); app/page.tsx is site-owned and tracked
-/app/information/
 /app/newsroom/
+/app/\[year\]/
+/app/archive/
+/app/articles/
+/app/settings/
 /app/api/
 /app/%5F_preview/
 /app/layout.tsx
 /middleware.ts
 # >>> papyrus-app sync (generated route shims)
 /app/%5F_preview/[[...path]]/route.ts
-/app/information/[year]/[month]/[day]/[articleSlug]/page.tsx
-/app/information/[year]/[month]/[day]/page.tsx
-/app/information/[year]/[month]/[day]/page/[pageNumber]/page.tsx
-/app/information/[year]/[month]/[day]/section/[sectionKey]/page.tsx
+/app/[year]/[month]/[day]/[articleSlug]/page.tsx
+/app/[year]/[month]/[day]/page.tsx
+/app/[year]/[month]/[day]/page/[pageNumber]/page.tsx
+/app/[year]/[month]/[day]/section/[sectionKey]/page.tsx
 /app/api/archive/editions/route.ts
+/app/api/auth/prospectus/accounts/route.ts
+/app/api/auth/prospectus/callback/route.ts
+/app/api/auth/prospectus/selection/route.ts
+/app/api/auth/prospectus/session/route.ts
+/app/api/auth/prospectus/sign-in/route.ts
+/app/api/auth/prospectus/sign-out/route.ts
+/app/api/cyclotron/priming-proof/route.ts
+/app/api/local-preview/derive/route.ts
+/app/api/local-preview/media/route.ts
 /app/api/media/[...path]/route.ts
 /app/api/revalidate/route.ts
-/app/information/archive/page.tsx
-/app/information/articles/[slug]/page.tsx
+/app/archive/page.tsx
+/app/articles/[slug]/page.tsx
+/app/cyclotron/page.tsx
 /app/layout.tsx
 /app/newsroom/[section]/[...selection]/page.tsx
 /app/newsroom/[section]/page.tsx
@@ -44,8 +57,9 @@ npm-debug.log*
 /app/newsroom/layout.tsx
 /app/newsroom/page.tsx
 /app/newsroom/sections/[sectionId]/page.tsx
-/app/information/page.tsx
-/app/information/settings/page.tsx
+/app/newsroom/settings/page.tsx
+/app/robots.ts
+/app/settings/page.tsx
 /middleware.ts
 /.papyrus/
 # <<< papyrus-app sync
