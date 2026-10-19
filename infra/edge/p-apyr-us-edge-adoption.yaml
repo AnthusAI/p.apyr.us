@@ -266,9 +266,9 @@ Resources:
 Outputs:
   ProductionDistributionId:
     Value: !Ref ProductionDistribution
+  ProductionDomainName:
+    Value: !GetAtt ProductionDistribution.DomainName
   StagingDistributionId:
     Value: !Ref StagingDistribution
-  MarketingDistributionId:
-    Value: !Ref MarketingDistribution
-  ReaderDistributionId:
-    Value: !Ref ReaderDistribution
+  StagingDomainName:
+    Value: !GetAtt StagingDistribution.DomainName
