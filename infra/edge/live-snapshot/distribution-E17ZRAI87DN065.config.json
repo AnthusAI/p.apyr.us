@@ -1,0 +1,303 @@
+{
+  "DistributionConfig": {
+    "CallerReference": "53e96682-fd97-3b6b-341b-c488f7960799",
+    "Aliases": {
+      "Quantity": 2,
+      "Items": [
+        "p.apyr.us",
+        "apyr.us"
+      ]
+    },
+    "DefaultRootObject": "index.html",
+    "Origins": {
+      "Quantity": 2,
+      "Items": [
+        {
+          "Id": "cms-amplify",
+          "DomainName": "main.ds6yswxui41yi.amplifyapp.com",
+          "OriginPath": "",
+          "CustomHeaders": {
+            "Quantity": 0
+          },
+          "CustomOriginConfig": {
+            "HTTPPort": 80,
+            "HTTPSPort": 443,
+            "OriginProtocolPolicy": "https-only",
+            "OriginSslProtocols": {
+              "Quantity": 1,
+              "Items": [
+                "TLSv1.2"
+              ]
+            },
+            "OriginReadTimeout": 30,
+            "OriginKeepaliveTimeout": 5
+          },
+          "ConnectionAttempts": 3,
+          "ConnectionTimeout": 10,
+          "OriginShield": {
+            "Enabled": false
+          },
+          "OriginAccessControlId": ""
+        },
+        {
+          "Id": "marketing-s3",
+          "DomainName": "papyrus-web-marketing-712236451410-us-east-1.s3.us-east-1.amazonaws.com",
+          "OriginPath": "",
+          "CustomHeaders": {
+            "Quantity": 0
+          },
+          "S3OriginConfig": {
+            "OriginAccessIdentity": "",
+            "OriginReadTimeout": 30
+          },
+          "ConnectionAttempts": 3,
+          "ConnectionTimeout": 10,
+          "OriginShield": {
+            "Enabled": false
+          },
+          "OriginAccessControlId": "E23SVM97AX6ZLI"
+        }
+      ]
+    },
+    "OriginGroups": {
+      "Quantity": 0
+    },
+    "DefaultCacheBehavior": {
+      "TargetOriginId": "marketing-s3",
+      "TrustedSigners": {
+        "Enabled": false,
+        "Quantity": 0
+      },
+      "TrustedKeyGroups": {
+        "Enabled": false,
+        "Quantity": 0
+      },
+      "ViewerProtocolPolicy": "redirect-to-https",
+      "AllowedMethods": {
+        "Quantity": 2,
+        "Items": [
+          "HEAD",
+          "GET"
+        ],
+        "CachedMethods": {
+          "Quantity": 2,
+          "Items": [
+            "HEAD",
+            "GET"
+          ]
+        }
+      },
+      "SmoothStreaming": false,
+      "Compress": true,
+      "LambdaFunctionAssociations": {
+        "Quantity": 0
+      },
+      "FunctionAssociations": {
+        "Quantity": 1,
+        "Items": [
+          {
+            "FunctionARN": "arn:aws:cloudfront::712236451410:function/papyrus-legacy-reader-redirect",
+            "EventType": "viewer-request"
+          }
+        ]
+      },
+      "FieldLevelEncryptionId": "",
+      "CachePolicyId": "658327ea-f89d-4fab-a63d-7e88639e58f6",
+      "GrpcConfig": {
+        "Enabled": false
+      }
+    },
+    "CacheBehaviors": {
+      "Quantity": 3,
+      "Items": [
+        {
+          "PathPattern": "/newsroom*",
+          "TargetOriginId": "cms-amplify",
+          "TrustedSigners": {
+            "Enabled": false,
+            "Quantity": 0
+          },
+          "TrustedKeyGroups": {
+            "Enabled": false,
+            "Quantity": 0
+          },
+          "ViewerProtocolPolicy": "redirect-to-https",
+          "AllowedMethods": {
+            "Quantity": 7,
+            "Items": [
+              "HEAD",
+              "DELETE",
+              "POST",
+              "GET",
+              "OPTIONS",
+              "PUT",
+              "PATCH"
+            ],
+            "CachedMethods": {
+              "Quantity": 2,
+              "Items": [
+                "HEAD",
+                "GET"
+              ]
+            }
+          },
+          "SmoothStreaming": false,
+          "Compress": true,
+          "LambdaFunctionAssociations": {
+            "Quantity": 0
+          },
+          "FunctionAssociations": {
+            "Quantity": 1,
+            "Items": [
+              {
+                "FunctionARN": "arn:aws:cloudfront::712236451410:function/papyrus-edge-p-apyr-us-forward-host",
+                "EventType": "viewer-request"
+              }
+            ]
+          },
+          "FieldLevelEncryptionId": "",
+          "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
+          "OriginRequestPolicyId": "b689b0a8-53d0-40ab-baf2-68738e2966ac",
+          "GrpcConfig": {
+            "Enabled": false
+          }
+        },
+        {
+          "PathPattern": "/_next/*",
+          "TargetOriginId": "cms-amplify",
+          "TrustedSigners": {
+            "Enabled": false,
+            "Quantity": 0
+          },
+          "TrustedKeyGroups": {
+            "Enabled": false,
+            "Quantity": 0
+          },
+          "ViewerProtocolPolicy": "redirect-to-https",
+          "AllowedMethods": {
+            "Quantity": 7,
+            "Items": [
+              "HEAD",
+              "DELETE",
+              "POST",
+              "GET",
+              "OPTIONS",
+              "PUT",
+              "PATCH"
+            ],
+            "CachedMethods": {
+              "Quantity": 2,
+              "Items": [
+                "HEAD",
+                "GET"
+              ]
+            }
+          },
+          "SmoothStreaming": false,
+          "Compress": true,
+          "LambdaFunctionAssociations": {
+            "Quantity": 0
+          },
+          "FunctionAssociations": {
+            "Quantity": 1,
+            "Items": [
+              {
+                "FunctionARN": "arn:aws:cloudfront::712236451410:function/papyrus-edge-p-apyr-us-forward-host",
+                "EventType": "viewer-request"
+              }
+            ]
+          },
+          "FieldLevelEncryptionId": "",
+          "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
+          "OriginRequestPolicyId": "b689b0a8-53d0-40ab-baf2-68738e2966ac",
+          "GrpcConfig": {
+            "Enabled": false
+          }
+        },
+        {
+          "PathPattern": "/api/*",
+          "TargetOriginId": "cms-amplify",
+          "TrustedSigners": {
+            "Enabled": false,
+            "Quantity": 0
+          },
+          "TrustedKeyGroups": {
+            "Enabled": false,
+            "Quantity": 0
+          },
+          "ViewerProtocolPolicy": "redirect-to-https",
+          "AllowedMethods": {
+            "Quantity": 7,
+            "Items": [
+              "HEAD",
+              "DELETE",
+              "POST",
+              "GET",
+              "OPTIONS",
+              "PUT",
+              "PATCH"
+            ],
+            "CachedMethods": {
+              "Quantity": 2,
+              "Items": [
+                "HEAD",
+                "GET"
+              ]
+            }
+          },
+          "SmoothStreaming": false,
+          "Compress": true,
+          "LambdaFunctionAssociations": {
+            "Quantity": 0
+          },
+          "FunctionAssociations": {
+            "Quantity": 1,
+            "Items": [
+              {
+                "FunctionARN": "arn:aws:cloudfront::712236451410:function/papyrus-edge-p-apyr-us-forward-host",
+                "EventType": "viewer-request"
+              }
+            ]
+          },
+          "FieldLevelEncryptionId": "",
+          "CachePolicyId": "4135ea2d-6df8-44a3-9df3-4b5a84be39ad",
+          "OriginRequestPolicyId": "b689b0a8-53d0-40ab-baf2-68738e2966ac",
+          "GrpcConfig": {
+            "Enabled": false
+          }
+        }
+      ]
+    },
+    "CustomErrorResponses": {
+      "Quantity": 0
+    },
+    "Comment": "papyrus-web-marketing-candidate",
+    "Logging": {
+      "Enabled": false,
+      "IncludeCookies": false,
+      "Bucket": "",
+      "Prefix": ""
+    },
+    "PriceClass": "PriceClass_100",
+    "Enabled": true,
+    "ViewerCertificate": {
+      "CloudFrontDefaultCertificate": false,
+      "ACMCertificateArn": "arn:aws:acm:us-east-1:712236451410:certificate/6b83eeb4-ecde-4665-89f0-c480e7877ac4",
+      "SSLSupportMethod": "sni-only",
+      "MinimumProtocolVersion": "TLSv1.2_2021",
+      "Certificate": "arn:aws:acm:us-east-1:712236451410:certificate/6b83eeb4-ecde-4665-89f0-c480e7877ac4",
+      "CertificateSource": "acm"
+    },
+    "Restrictions": {
+      "GeoRestriction": {
+        "RestrictionType": "none",
+        "Quantity": 0
+      }
+    },
+    "WebACLId": "",
+    "HttpVersion": "http2",
+    "IsIPV6Enabled": true,
+    "ContinuousDeploymentPolicyId": "",
+    "Staging": false
+  }
+}

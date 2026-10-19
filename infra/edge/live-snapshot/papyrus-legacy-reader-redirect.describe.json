@@ -1,0 +1,17 @@
+{
+    "ETag": "E3UN6WX5RRO2AG",
+    "FunctionSummary": {
+        "Name": "papyrus-legacy-reader-redirect",
+        "Status": "DEPLOYED",
+        "FunctionConfig": {
+            "Comment": "legacy publication paths to read.p.apyr.us; apyr.us to p.apyr.us",
+            "Runtime": "cloudfront-js-2.0"
+        },
+        "FunctionMetadata": {
+            "FunctionARN": "arn:aws:cloudfront::712236451410:function/papyrus-legacy-reader-redirect",
+            "Stage": "LIVE",
+            "CreatedTime": "2026-10-18T13:22:31.822000+00:00",
+            "LastModifiedTime": "2026-10-18T15:02:18.226000+00:00"
+        }
+    }
+}

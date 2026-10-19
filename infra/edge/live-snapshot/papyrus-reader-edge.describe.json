@@ -1,0 +1,17 @@
+{
+    "ETag": "ETVPDKIKX0DER",
+    "FunctionSummary": {
+        "Name": "papyrus-reader-edge",
+        "Status": "DEPLOYED",
+        "FunctionConfig": {
+            "Comment": "read.p.apyr.us publication only",
+            "Runtime": "cloudfront-js-2.0"
+        },
+        "FunctionMetadata": {
+            "FunctionARN": "arn:aws:cloudfront::712236451410:function/papyrus-reader-edge",
+            "Stage": "LIVE",
+            "CreatedTime": "2026-10-18T15:02:25.963000+00:00",
+            "LastModifiedTime": "2026-10-18T15:02:25.996000+00:00"
+        }
+    }
+}

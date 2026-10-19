@@ -1,0 +1,20 @@
+[
+    [
+        "ForwardHostFunction",
+        "AWS::CloudFront::Function",
+        "arn:aws:cloudfront::712236451410:function/papyrus-edge-p-apyr-us-forward-host",
+        "CREATE_COMPLETE"
+    ],
+    [
+        "ProductionDistribution",
+        "AWS::CloudFront::Distribution",
+        "E2QW8WOFWQT0H4",
+        "CREATE_COMPLETE"
+    ],
+    [
+        "StagingDistribution",
+        "AWS::CloudFront::Distribution",
+        "E28MOJ7T494DCX",
+        "CREATE_COMPLETE"
+    ]
+]
