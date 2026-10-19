@@ -1,5 +1,5 @@
 [
-  { "ResourceType": "AWS::CloudFront::Function", "LogicalResourceId": "ReaderEdgeFunction", "ResourceIdentifier": { "FunctionName": "papyrus-reader-edge" } },
+  { "ResourceType": "AWS::CloudFront::Function", "LogicalResourceId": "ReaderEdgeFunction", "ResourceIdentifier": { "FunctionARN": "arn:aws:cloudfront::712236451410:function/papyrus-reader-edge" } },
   { "ResourceType": "AWS::CloudFront::Distribution", "LogicalResourceId": "MarketingDistribution", "ResourceIdentifier": { "Id": "E17ZRAI87DN065" } },
   { "ResourceType": "AWS::CloudFront::Distribution", "LogicalResourceId": "ReaderDistribution", "ResourceIdentifier": { "Id": "E2EM0JLBC2W9WW" } }
 ]
