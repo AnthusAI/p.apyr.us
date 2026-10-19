@@ -12,3 +12,19 @@ corpora:
   localClassifiers:
   - classifierId: p-apyr-us
     label: Information Systems Topics
+relevanceCyclotron:
+  cyclotronId: papyrus-relevance
+  classifierId: relevant
+  question: Should this candidate source become a reference for this publication?
+  labels:
+  - include
+  - exclude
+  positiveLabel: include
+  decisionModel:
+    provider: jev
+    model: jev-1.13.0
+  optimizer: null
+  store:
+    localPath: var/cyclotrons/papyrus-relevance
+    s3Prefix: s3://amplify-ds6yswxui41yi-mai-papyrusmediabucket0dab24-uuzzq2kfc5vq/cyclotrons/papyrus-relevance/
+  maxRequestsPerSweep: 30

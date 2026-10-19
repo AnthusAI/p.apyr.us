@@ -63,3 +63,6 @@ npm-debug.log*
 /middleware.ts
 /.papyrus/
 # <<< papyrus-app sync
+
+# Local cyclotron store (snapshots hold item text and explanations)
+var/
