@@ -1,6 +1,6 @@
 # Import template: the stack's resources plus the two reader resources being adopted (ReaderEdgeFunction and ReaderDistribution), exactly as live.
 AWSTemplateFormatVersion: '2010-09-09'
-Description: CloudFront edge for p.apyr.us (CMS, marketing and reader) in front of Amplify default domains and the marketing bucket
+Description: CloudFront edge for p.apyr.us in front of Amplify default domains (bypasses Amplify custom-domain API)
 Parameters:
   CertificateArn:
     Type: String
@@ -103,6 +103,7 @@ Resources:
       DistributionConfig:
         Enabled: true
         Comment: p.apyr.us production
+        Aliases: [!Ref ProductionHost, !Ref ApexHost]
         HttpVersion: http2and3
         IPV6Enabled: true
         ViewerCertificate:
