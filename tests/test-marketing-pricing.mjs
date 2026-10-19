@@ -41,7 +41,7 @@ for (const selectorList of selectors) {
 assert.ok(stylesheet.includes(".papyrus-marketing .pm-chip"));
 
 const page = fs.readFileSync(new URL("../components/marketing/MarketingPage.tsx", import.meta.url), "utf8");
-assert.ok(page.includes('href="/information"'));
+assert.ok(page.includes('href="https://read.p.apyr.us"'));
 assert.ok(page.includes("https://github.com/AnthusAI/Papyrus"));
 assert.ok(page.includes("availabilityPresentation[tier.availability].chip"), "chips must be driven from the data file");
 assert.ok(page.includes('<span className="pm-chip">{chip}</span>'));

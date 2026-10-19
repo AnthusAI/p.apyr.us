@@ -17,7 +17,7 @@ Feature: Papyrus marketing site at the root
 
   Scenario: Links
     Given the marketing page
-    Then it links to the newspaper at "/information" and to the source on GitHub
+    Then it links to the newspaper at "https://read.p.apyr.us" and to the source on GitHub
 
   Scenario: The waitlist is hidden
     Given the marketing page

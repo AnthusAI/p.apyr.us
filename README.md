@@ -3,9 +3,8 @@
 The Papyrus product site and newspaper.
 
 - `/` is the marketing site: what Papyrus is, the four-tier pricing ladder, and no wait-list form yet (hidden behind `SHOW_WAITLIST` in `components/marketing/MarketingPage.tsx` until a real waitlist system exists).
-- `/information` is the newspaper (Information about information systems), mounted by `readerBasePath` in `papyrus.config.ts`.
+- `read.p.apyr.us` is the newspaper (Information about information systems), a plain stream with editions off, served by the same app and chosen by host in `app/page.tsx`.
 - `/newsroom` is the staff newsroom app.
-- Old newspaper paths (`/YYYY/<month>/DD...`, `/articles/<slug>`, `/archive`, `/settings`) redirect permanently to `/information/...`. The rules live in `legacyRedirects.mjs`.
 
 This repository is the publication. The application is the published [`@anthusai/papyrus`](https://www.npmjs.com/package/@anthusai/papyrus) package, pinned in `package.json` and `infra/site.json`. See [`AGENTS.md`](AGENTS.md) for the layout and the workflow.
 
