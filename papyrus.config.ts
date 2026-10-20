@@ -17,6 +17,7 @@ const pApyrUsBrand: SiteBrand = {
   mastheadDateFormat: "raw",
   mastheadSource: "brand",
   sectionLinkStrategy: "route",
+  kanbusTheme: "broadsheet-green",
   themePack: "papyrus",
   themeTokens: DEFAULT_THEME_PACK_TOKENS,
   renderer: { kind: "pretext" },
