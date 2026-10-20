@@ -10,7 +10,7 @@
     "test": "node tests/test-marketing-pricing.mjs"
   },
   "dependencies": {
-    "@anthusai/papyrus": "^3.1.0",
+    "@anthusai/papyrus": "^3.3.0",
     "@aws-amplify/backend": "^1.22.0",
     "@aws-amplify/backend-cli": "^1.8.2",
     "@aws-amplify/seed": "^1.1.2",
