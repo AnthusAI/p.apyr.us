@@ -5,7 +5,7 @@
   "brand": "p-apyr-us",
   "frontend": "pretext",
   "hostedZoneId": "Z10285921B1G7MVRV06W9",
-  "papyrusVersion": "5.15.0",
+  "papyrusVersion": "5.15.1",
   "cms": {
     "domainName": "apyr.us",
     "domainPrefix": "p",
@@ -23,6 +23,7 @@
       "PAPYRUS_ENABLE_SLACK": "false",
       "PAPYRUS_ENABLE_INBOUND_EMAIL": "false",
       "PAPYRUS_ENABLE_STORAGE_BACKUPS": "true",
+      "PAPYRUS_CURATION_UPSTREAM_URL": "https://o01d28uizl.execute-api.us-east-1.amazonaws.com",
       "PAPYRUS_OAUTH_REDIRECT_URLS": "https://main.ds6yswxui41yi.amplifyapp.com/newsroom,https://main.ds6yswxui41yi.amplifyapp.com/,http://localhost:3001/,http://localhost:3001/newsroom,https://p.apyr.us/,https://p.apyr.us/newsroom,https://p-staging.apyr.us/,https://p-staging.apyr.us/newsroom"
     },
     "prospectusAccountsApiStageArn": "arn:aws:execute-api:us-east-1:712236451410:bnh9mctvo9/api"

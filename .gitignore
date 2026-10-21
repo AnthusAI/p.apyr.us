@@ -42,6 +42,9 @@ npm-debug.log*
 /app/api/local-preview/derive/route.ts
 /app/api/local-preview/media/route.ts
 /app/api/media/[...path]/route.ts
+/app/api/newsroom/curation/context/route.ts
+/app/api/newsroom/curation/priming/route.ts
+/app/api/newsroom/curation/publication/route.ts
 /app/api/revalidate/route.ts
 /app/archive/page.tsx
 /app/articles/[slug]/page.tsx
