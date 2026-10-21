@@ -78,6 +78,11 @@
     ]
   },
   "pageActions": {
-    "enabled": false
+    "enabled": true
+  },
+  "agents": {
+    "markdown": true,
+    "llmsTxt": true,
+    "llmsFull": true
   }
 }
