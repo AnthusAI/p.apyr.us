@@ -78,7 +78,8 @@
     ]
   },
   "pageActions": {
-    "enabled": true
+    "enabled": true,
+    "ai": ["chatgpt", "claude", "perplexity"]
   },
   "agents": {
     "markdown": true,
