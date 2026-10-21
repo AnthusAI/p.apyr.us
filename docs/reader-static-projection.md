@@ -18,4 +18,11 @@ The old reader served `/articles/<slug>`. Each is now a 301 to `/<section base>/
 
 ## Rollback
 
-The Amplify reader app `ds6yswxui41yi` (`main.ds6yswxui41yi.amplifyapp.com`) still serves the old reader at `/`, and the items keep their legacy columns. To go back: update `papyrus-edge-p-apyr-us` with the previous template (`git show <commit before the edge PR>:infra/edge/p-apyr-us-edge.yaml`), which points `ReaderDistribution` back at the Amplify origin; the aliases, certificate and DNS never moved. Then invalidate `/*` on the distribution.
+The Amplify reader app `ds6yswxui41yi` (`main.ds6yswxui41yi.amplifyapp.com`) still serves the old reader at `/`, the items keep their legacy deck and byline columns, and `papyrus-reader-edge` (the old viewer-request function) is still in the stack. To go back: update `papyrus-edge-p-apyr-us` with the template as it was before the edge change (`git show 4a5f036:infra/edge/p-apyr-us-edge.yaml`; it has no bucket or key-value store parameters, so leave them out), which points `ReaderDistribution` back at the Amplify origin. Create a change set, read it (expect Modify on `ReaderDistribution` and removal of the site function and OAC), execute it, then invalidate `/*` on `E2EM0JLBC2W9WW`. Aliases, certificate and DNS never moved. The Amplify build runs `papyrus-infra deploy-edge` on every `main` build, so revert `infra/edge/p-apyr-us-edge.yaml` and `amplify.yml` on `main` in the same change, or the next build re-applies the static edge.
+
+Cutover record (2026-10-21): change set `reader-static-projection-2` (Modify `ReaderDistribution`, Add the site OAC and function, no replacement); 162 polls every 2 seconds of `/`, two old `/articles/` URLs and `/robots.txt` through the change returned 200 every time; one `/*` invalidation afterwards.
+
+## Leftovers
+
+- `papyrus-reader-edge` stays in the stack until the Amplify reader is retired; the new function carries the `/newsroom` redirect.
+- The Amplify reader app is retired by hand after a quiet week.

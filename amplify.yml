@@ -13,6 +13,8 @@ backend:
           --adoption-template infra/edge/p-apyr-us-edge-adoption.yaml
           --adopt-resources infra/edge/adopt-resources.json
           --parameter ReaderCertificateArn=arn:aws:acm:us-east-1:712236451410:certificate/5daf7da4-bdc1-42fe-93c4-a4fe2f948805
+          --parameter SiteBucketRegionalDomainName=amplify-ds6yswxui41yi-main-bran-sitebucket397a1860-y3dzuduvsux5.s3.us-east-1.amazonaws.com
+          --parameter RedirectsKeyValueStoreArn=arn:aws:cloudfront::712236451410:key-value-store/27bad446-124c-42fd-86cd-11bf831baf97
           --only-branch main
           --only-app-id ds6yswxui41yi
         - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID

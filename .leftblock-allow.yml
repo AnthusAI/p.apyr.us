@@ -1,0 +1,17 @@
+# LeftBlock overrides: each entry approves one finding (one rule on one exact
+# line content in one file). Changing that line re-blocks it. `kind` is the
+# rule's category, shown for reviewers; it is not part of matching.
+version: 1
+allow:
+  - id: "e4d4a85317c98275"
+    rule: "leftblock-session-uuid"
+    file: "amplify.yml"
+    kind: "Bare UUID (potential session/agent identifier)"
+    reason: "CloudFront key-value-store id and the AWS managed CachingOptimized cache policy id: public resource identifiers, not session identifiers"
+    added: 2026-10-21
+  - id: "14c87ffa155e240a"
+    rule: "leftblock-session-uuid"
+    file: "infra/edge/p-apyr-us-edge.yaml"
+    kind: "Bare UUID (potential session/agent identifier)"
+    reason: "CloudFront key-value-store id and the AWS managed CachingOptimized cache policy id: public resource identifiers, not session identifiers"
+    added: 2026-10-21

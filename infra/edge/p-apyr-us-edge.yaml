@@ -19,6 +19,12 @@ Parameters:
   ReaderHost:
     Type: String
     Default: read.p.apyr.us
+  SiteBucketRegionalDomainName:
+    Type: String
+    Description: The backend site bucket, <bucket>.s3.us-east-1.amazonaws.com (PAPYRUS_SITE_BUCKET on content-actions).
+  RedirectsKeyValueStoreArn:
+    Type: String
+    Description: The backend redirects key-value store (PAPYRUS_REDIRECTS_KVS_ARN on content-actions).
 Resources:
   ForwardHostFunction:
     Type: AWS::CloudFront::Function
@@ -82,6 +88,78 @@ Resources:
           request.headers['x-forwarded-host'] = { value: host };
           return request;
         }
+  ReaderSiteViewerRequestFunction:
+    Type: AWS::CloudFront::Function
+    Properties:
+      Name: !Sub '${AWS::StackName}-reader-site-viewer-request'
+      AutoPublish: true
+      FunctionConfig:
+        Comment: Send newsroom paths to the CMS host; key-value-store redirects; directory index documents
+        Runtime: cloudfront-js-2.0
+        KeyValueStoreAssociations:
+          - KeyValueStoreARN: !Ref RedirectsKeyValueStoreArn
+      FunctionCode: !Sub |
+        import cf from "cloudfront";
+
+        const redirectStore = cf.kvs();
+
+        function serializedQuery(querystring) {
+          const parts = [];
+          Object.keys(querystring).forEach(function (name) {
+            const entry = querystring[name];
+            const values = entry.multiValue ? entry.multiValue.map(function (item) { return item.value; }) : [entry.value];
+            values.forEach(function (value) {
+              parts.push(value === "" ? name : name + "=" + value);
+            });
+          });
+          return parts.length > 0 ? "?" + parts.join("&") : "";
+        }
+
+        function redirect(status, description, location) {
+          return { statusCode: status, statusDescription: description, headers: { location: { value: location } } };
+        }
+
+        async function lookUpRedirectTarget(uri) {
+          try {
+            const target = await redirectStore.get(uri);
+            return target ? String(target) : null;
+          } catch (error) {
+            return null;
+          }
+        }
+
+        function rewriteToIndexDocument(uri) {
+          if (uri.endsWith("/")) {
+            return uri + "index.html";
+          }
+          const lastSegment = uri.substring(uri.lastIndexOf("/") + 1);
+          if (lastSegment.indexOf(".") === -1) {
+            return uri + "/index.html";
+          }
+          return uri;
+        }
+
+        async function handler(event) {
+          const request = event.request;
+          const uri = request.uri;
+          if (uri === "/newsroom" || uri.indexOf("/newsroom/") === 0) {
+            return redirect(302, "Found", "https://${ProductionHost}" + uri + serializedQuery(request.querystring));
+          }
+          const redirectTarget = await lookUpRedirectTarget(uri);
+          if (redirectTarget !== null) {
+            return redirect(301, "Moved Permanently", redirectTarget);
+          }
+          request.uri = rewriteToIndexDocument(uri);
+          return request;
+        }
+  ReaderSiteBucketOriginAccessControl:
+    Type: AWS::CloudFront::OriginAccessControl
+    Properties:
+      OriginAccessControlConfig:
+        Name: !Sub '${AWS::StackName}-reader-site-bucket'
+        OriginAccessControlOriginType: s3
+        SigningBehavior: always
+        SigningProtocol: sigv4
   ProductionDistribution:
     Type: AWS::CloudFront::Distribution
     Properties:
@@ -154,21 +232,26 @@ Resources:
           SslSupportMethod: sni-only
           MinimumProtocolVersion: TLSv1.2_2021
         Origins:
-          - Id: amplify
-            DomainName: !Sub 'main.${AmplifyAppId}.amplifyapp.com'
-            CustomOriginConfig:
-              OriginProtocolPolicy: https-only
-              OriginSSLProtocols: [TLSv1.2]
+          - Id: site-bucket
+            DomainName: !Ref SiteBucketRegionalDomainName
+            OriginAccessControlId: !GetAtt ReaderSiteBucketOriginAccessControl.Id
+            S3OriginConfig:
+              OriginAccessIdentity: ''
         DefaultCacheBehavior:
-          TargetOriginId: amplify
+          TargetOriginId: site-bucket
           ViewerProtocolPolicy: redirect-to-https
           Compress: true
-          AllowedMethods: [GET, HEAD, OPTIONS, PUT, POST, PATCH, DELETE]
-          CachePolicyId: 4135ea2d-6df8-44a3-9df3-4b5a84be39ad
-          OriginRequestPolicyId: b689b0a8-53d0-40ab-baf2-68738e2966ac
+          CachePolicyId: 658327ea-f89d-4fab-a63d-7e88639e58f6
           FunctionAssociations:
             - EventType: viewer-request
-              FunctionARN: !GetAtt ReaderEdgeFunction.FunctionARN
+              FunctionARN: !GetAtt ReaderSiteViewerRequestFunction.FunctionARN
+        CustomErrorResponses:
+          - ErrorCode: 404
+            ResponseCode: 404
+            ResponsePagePath: /404.html
+          - ErrorCode: 403
+            ResponseCode: 404
+            ResponsePagePath: /404.html
 Outputs:
   ProductionDistributionId:
     Value: !Ref ProductionDistribution
