@@ -5,12 +5,17 @@
   "brand": "p-apyr-us",
   "frontend": "pretext",
   "hostedZoneId": "Z10285921B1G7MVRV06W9",
-  "papyrusVersion": "5.12.0",
+  "papyrusVersion": "5.13.0",
   "cms": {
     "domainName": "apyr.us",
     "domainPrefix": "p",
     "stagingDomainPrefix": "p-staging",
-    "redirects": [{ "source": "apyr.us", "status": 301 }],
+    "redirects": [
+      {
+        "source": "apyr.us",
+        "status": 301
+      }
+    ],
     "cognitoDomainPrefix": "papyrus-p-apyr-us",
     "applyCognitoDomainPrefix": true,
     "environment": {
@@ -25,6 +30,8 @@
   "github": {
     "owner": "AnthusAI",
     "repo": "p.apyr.us",
-    "ciCanDeployInfra": false
+    "ciCanDeployInfra": false,
+    "ownerId": 152415604,
+    "repoId": 1409544042
   }
 }
