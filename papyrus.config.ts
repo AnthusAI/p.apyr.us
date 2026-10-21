@@ -54,6 +54,12 @@ export default defineSite({
         "https://staging.ds6yswxui41yi.amplifyapp.com/newsroom",
       ],
     },
+    publication: {
+      kind: "s3-projection",
+      staticDir: "web",
+      reprojectOnDeploy: true,
+      edgeDistributionArn: "arn:aws:cloudfront::712236451410:distribution/E2EM0JLBC2W9WW",
+    },
     stagingBuild: { enabled: true },
     features: {
       consoleResponder: false,

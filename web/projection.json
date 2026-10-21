@@ -1,0 +1,83 @@
+{
+  "theme": null,
+  "site": {
+    "name": "Papyrus",
+    "tagline": "Inside Papyrus",
+    "description": "Inside Papyrus: how an autonomous newsroom works, and how to run one.",
+    "productionUrl": "https://read.p.apyr.us",
+    "language": "en"
+  },
+  "urls": {
+    "style": "directory",
+    "sections": {
+      "Papyrus": {
+        "base": "papyrus",
+        "label": "Papyrus",
+        "description": "What Papyrus is and why it works the way it does."
+      },
+      "Newsroom How-To": {
+        "base": "how-to",
+        "label": "Newsroom How-To",
+        "description": "Step-by-step guides for running a Papyrus newsroom."
+      }
+    }
+  },
+  "nav": {
+    "links": [
+      {
+        "label": "Papyrus",
+        "href": "/papyrus/"
+      },
+      {
+        "label": "Newsroom How-To",
+        "href": "/how-to/"
+      },
+      {
+        "label": "p.apyr.us",
+        "href": "https://p.apyr.us/"
+      }
+    ]
+  },
+  "footer": {
+    "text": "Papyrus: information about information systems."
+  },
+  "seo": {
+    "publisherName": "Papyrus",
+    "jsonLdTypes": {
+      "Papyrus": "Article",
+      "Newsroom How-To": "Article"
+    }
+  },
+  "listings": {
+    "pageSize": 50,
+    "homeCount": 50,
+    "tags": false
+  },
+  "sitemap": {
+    "style": "single",
+    "lastmod": true
+  },
+  "feeds": {
+    "formats": [
+      "rss",
+      "atom"
+    ],
+    "count": 30,
+    "title": "Papyrus"
+  },
+  "icons": {
+    "icon": "/assets/papyrus-plant.png",
+    "iconType": "image/png"
+  },
+  "components": {
+    "breadcrumbs": true
+  },
+  "chrome": {
+    "stylesheets": [
+      "css/site-theme.css"
+    ]
+  },
+  "pageActions": {
+    "enabled": false
+  }
+}
