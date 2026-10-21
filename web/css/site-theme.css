@@ -1,0 +1,95 @@
+/* Papyrus reader (read.p.apyr.us): the dark newsprint look of the original reader, on the standard Markus components. */
+:root {
+  --pa-paper: #1b1c1f;
+  --pa-paper-edge: #141517;
+  --pa-ink: #ececec;
+  --pa-body: #c9c9cb;
+  --pa-muted: #8c8d91;
+  --pa-rule: #3a3b3f;
+  --pa-accent: #b9d0a8;
+  --pa-serif: Georgia, "Times New Roman", serif;
+  --pa-sans: system-ui, -apple-system, "Segoe UI", sans-serif;
+  --pa-width: 1180px;
+  --papyrus-focus: #b9d0a8;
+}
+
+*, *::before, *::after { box-sizing: border-box; }
+html { -webkit-text-size-adjust: 100%; }
+
+body.markus-body {
+  margin: 0;
+  min-height: 100vh;
+  color: var(--pa-body);
+  background: radial-gradient(ellipse at 80% 90%, #252629 0%, var(--pa-paper) 55%, var(--pa-paper-edge) 100%) fixed;
+  font-family: var(--pa-serif);
+  font-size: 18px;
+  line-height: 1.6;
+}
+
+a { color: inherit; text-decoration-color: var(--pa-rule); text-underline-offset: 3px; }
+a:hover { color: var(--pa-ink); text-decoration-color: currentColor; }
+
+.markus-site-masthead, #main, .markus-site-footer {
+  width: min(100% - 2rem, var(--pa-width));
+  margin-inline: auto;
+}
+
+.markus-site-masthead {
+  padding: 3rem 0 1rem;
+  border-bottom: 3px double var(--pa-rule);
+}
+.markus-site-wordmark { margin: 0; font-size: clamp(3rem, 9vw, 5.5rem); line-height: 1; letter-spacing: 0.01em; text-transform: uppercase; }
+.markus-site-wordmark a { color: var(--pa-ink); text-decoration: none; }
+.markus-site-tagline { margin: 0.6rem 0 0; font-style: italic; font-size: 0.9rem; color: var(--pa-muted); }
+.markus-site-nav {
+  display: flex; flex-wrap: wrap; gap: 0.5rem 1.4rem;
+  margin-top: 1.4rem; padding: 0.6rem 0 0;
+  border-top: 1px solid var(--pa-rule);
+  font-family: var(--pa-sans); font-size: 0.72rem; font-weight: 700; letter-spacing: 0.12em; text-transform: uppercase;
+}
+.markus-site-nav a { color: var(--pa-muted); text-decoration: none; padding: 0.35rem 0; }
+.markus-site-nav a:hover, .markus-site-nav a[aria-current="page"] { color: var(--pa-ink); }
+
+#main { padding: 1.5rem 0 4rem; }
+.markus-breadcrumbs { font-family: var(--pa-sans); font-size: 0.72rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--pa-muted); margin-bottom: 1.5rem; }
+.markus-breadcrumbs ol { list-style: none; display: flex; flex-wrap: wrap; gap: 0.4rem; margin: 0; padding: 0; }
+.markus-breadcrumbs li + li::before { content: "/"; margin-right: 0.4rem; color: var(--pa-rule); }
+.markus-breadcrumbs a { text-decoration: none; }
+
+.markus-document > h1 { color: var(--pa-ink); font-weight: 400; font-size: clamp(2rem, 5vw, 3.4rem); line-height: 1.1; margin: 0 0 0.5rem; }
+.markus-document > h1 + p { font-style: italic; color: var(--pa-muted); margin: 0 0 1.5rem; }
+
+/* Listings: one ruled row per story, as in the original reader. */
+.markus-card-grid { display: block; }
+.markus-card { padding: 1.6rem 0 1.4rem; border-bottom: 1px solid var(--pa-rule); }
+.markus-card-title { margin: 0; font-weight: 400; font-size: clamp(1.6rem, 3.4vw, 2.4rem); line-height: 1.15; }
+.markus-card-title a { color: var(--pa-ink); text-decoration: none; }
+.markus-card-title a:hover { text-decoration: underline; }
+.markus-card .markus-byline { order: -1; margin: 0 0 0.3rem; }
+.markus-card-summary { margin: 0.5rem 0 0; max-width: 46rem; font-style: italic; font-size: 0.9rem; color: var(--pa-muted); }
+
+.markus-byline { font-family: var(--pa-sans); font-size: 0.7rem; letter-spacing: 0.1em; text-transform: uppercase; color: var(--pa-muted); }
+
+/* Article: big headline, italic dek, two-column text on wide screens. */
+.markus-header h1 { color: var(--pa-ink); font-weight: 400; font-size: clamp(2.4rem, 7vw, 5rem); line-height: 1.05; margin: 0.4rem 0 0.8rem; }
+.markus-lede { margin: 0 0 1.8rem; font-style: italic; font-size: 1rem; color: var(--pa-muted); }
+article.markus-document > :not(header) { max-width: 44rem; }
+@media (min-width: 1000px) {
+  article.markus-document { display: block; }
+  article.markus-document > header { max-width: none; }
+  article.markus-document > p, article.markus-document > h2, article.markus-document > h3, article.markus-document > ul, article.markus-document > ol { max-width: none; }
+  article.markus-document { column-count: 2; column-gap: 3rem; }
+  article.markus-document > header { column-span: all; }
+}
+article.markus-document h2, article.markus-document h3 { color: var(--pa-ink); font-weight: 400; break-after: avoid; }
+article.markus-document code { font-size: 0.85em; background: #26272a; padding: 0.1em 0.35em; border-radius: 3px; }
+article.markus-document pre { background: #121315; padding: 1rem; overflow-x: auto; }
+
+.markus-site-footer { padding: 1.5rem 0 3rem; border-top: 1px solid var(--pa-rule); font-family: var(--pa-sans); font-size: 0.75rem; color: var(--pa-muted); }
+.markus-footer-text { margin: 0; }
+.markus-pager { display: flex; justify-content: space-between; font-family: var(--pa-sans); font-size: 0.8rem; margin-top: 2rem; }
+
+@media (max-width: 640px) {
+  body.markus-body { font-size: 17px; }
+  .markus-site-masthead { padding-top: 1.8rem; }
+}

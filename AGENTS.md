@@ -8,6 +8,7 @@ This repository holds only what is specific to the Papyrus product site and news
 - `app/page.tsx`: the site-owned marketing root. `papyrus-app sync` leaves it alone.
 - `components/marketing/`: marketing page, pricing tiers, wait-list form (hidden behind `SHOW_WAITLIST` in `MarketingPage.tsx` until a real waitlist system exists), and `marketing.css`, every rule scoped under `.papyrus-marketing` so the shared Papyrus root layout styles do not leak in or out.
 - `app/page.tsx`: site-owned root. On `read.p.apyr.us` it renders the Papyrus publication stream; on `p.apyr.us` it renders the marketing page.
+- `web/`: the static reader (`read.p.apyr.us`) on the standard Papyrus front end: `projection.json` and `css/site-theme.css`. See `docs/reader-static-projection.md`. `bin/front_matter_migration.py` is the one-time front matter migration.
 - `features/`: Gherkin for the redirects and the marketing site. `tests/` implements them (`npm test`).
 - `corpora/`: the small configuration files the reader reads at runtime.
 - `amplify/`: one-line re-exports from the package.
