@@ -16,4 +16,8 @@ npm run dev
 
 Building needs a generated `amplify_outputs.json` (gitignored) from a deployed backend.
 
+## Publication doctrine
+
+`corpora/papyrus-publication-doctrine.yml` mirrors the production doctrine records edited at `/newsroom/administration/policies`. Ryan approved it on 2026-10-21. It is the doctrine the relevance classifier criteria derive from. Nothing in the build reads this file; it is here for version control.
+
 Built by [Anthus AI Solutions](https://anth.us).
