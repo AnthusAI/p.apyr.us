@@ -1,0 +1,15 @@
+schemaVersion: 1
+doctrine:
+  - kind: mission
+    body:
+      - Papyrus's newspaper, Information about information systems, explains how information systems work, change and fail, for readers who build or depend on them.
+      - Coverage includes AI and machine-learning systems, publishing and newsroom technology, and the history of information systems, each treated as a system with behavior and failure modes, not as hype.
+      - Every piece should leave readers with something specific they can check, such as a documented behavior, a measurable change or a primary source.
+
+  - kind: policy
+    body:
+      - Prefer primary documentation and inspectable evidence (papers, specifications, source code, official documentation, datasets) over commentary.
+      - A source belongs here if it explains or evidences how a specific information system works, changes or fails. Reject material that restates hype without an inspectable claim.
+      - Research, journalism and history that a reader could cite are in scope. Marketing, listicles and announcements with no technical substance are not.
+      - Every source must be traceable, with a stable link or identifier and clear provenance.
+      - Label uncertainty and speculation explicitly, and distinguish what a source shows from what it merely claims.
