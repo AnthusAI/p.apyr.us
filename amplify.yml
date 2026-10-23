@@ -5,24 +5,13 @@ backend:
       commands:
         - test "$AWS_APP_ID" = "ds6yswxui41yi"
         - npm ci --cache .npm --prefer-offline
-        - npm update anthus-footer
-        - >-
-          npx papyrus-infra deploy-edge
-          --stack papyrus-edge-p-apyr-us
-          --template infra/edge/p-apyr-us-edge.yaml
-          --adoption-template infra/edge/p-apyr-us-edge-adoption.yaml
-          --adopt-resources infra/edge/adopt-resources.json
-          --parameter ReaderCertificateArn=arn:aws:acm:us-east-1:712236451410:certificate/5daf7da4-bdc1-42fe-93c4-a4fe2f948805
-          --parameter SiteBucketRegionalDomainName=amplify-ds6yswxui41yi-main-bran-sitebucket397a1860-y3dzuduvsux5.s3.us-east-1.amazonaws.com
-          --parameter RedirectsKeyValueStoreArn=arn:aws:cloudfront::712236451410:key-value-store/27bad446-124c-42fd-86cd-11bf831baf97
-          --only-branch main
-          --only-app-id ds6yswxui41yi
-        - npx ampx pipeline-deploy --branch $AWS_BRANCH --app-id $AWS_APP_ID
+        - node bin/deploy-backend-if-needed.mjs
 frontend:
   phases:
     build:
       commands:
         - env | grep -e '^PAPYRUS_' -e '^SITE_ENV=' -e '^NEXT_PUBLIC_' >> .env.production
+        - npx ampx generate outputs --branch "$AWS_BRANCH" --app-id "$AWS_APP_ID"
         - npx papyrus-app sync && npm run build
         - cp amplify_outputs.json .next/amplify_outputs.json
   artifacts:
