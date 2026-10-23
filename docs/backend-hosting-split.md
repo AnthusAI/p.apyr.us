@@ -9,6 +9,8 @@ This draft moves the p.apyr.us backend and edge deployments into the public repo
 3. Only `app/page.tsx` and `components/marketing/**` are allowlisted as frontend-only. Lockfiles, shared packages, `amplify/**`, `infra/**`, `papyrus.config.ts`, `web/**`, workflow files, and every unknown path require a backend deployment. Missing, invalid, unreachable, or unreadable marker state forces a backend deployment. The marker updates only after both edge and Amplify backend deployment succeed.
 4. Amplify Hosting then starts the existing `RELEASE` job for the exact verified commit. Its buildspec generates `amplify_outputs.json` from the deployed branch with `ampx generate outputs`, then builds the existing Next.js SSR artifact.
 
+The hosting build no longer runs `npm update anthus-footer` on the mutable `main` branch after `npm ci`. This step took 28.2 seconds in the measured p.apyr.us build and caused deployment dependencies to differ from the lockfile tested by GitHub CI. Update the dependency by committing a reviewed lockfile change instead.
+
 The workflow's existing concurrency group serializes CI, backend state updates, and Amplify hosting. It permits one active and one latest pending main run; because path comparison starts from the last successful backend commit, the latest run still considers all commits not yet reflected in the marker. Failed backend deploys do not move the marker. If marker writing fails after a successful backend deployment, the next run repeats the deployment safely.
 
 ## Configuration changes outside Git
@@ -29,4 +31,4 @@ This draft does not create AWS resources or roles and must not be merged until t
 
 ## Measured expectation
 
-One p.apyr.us run spent 233.6 seconds in `ampx pipeline-deploy`, 14.7 seconds in a no-op edge deployment, 82.9 seconds in `npm ci`, 28.2 seconds updating `anthus-footer`, and 116.0 seconds in the Next.js build. The observed frontend-only target is about 5m29s total Amplify `BUILD` time versus 9m37s for that run, assuming the dependency and frontend stages remain similar. It is not a guaranteed duration or a 5m29s reduction. Backend changes still deploy the backend in GitHub and still require the Amplify SSR build.
+One p.apyr.us run spent 233.6 seconds in `ampx pipeline-deploy`, 14.7 seconds in a no-op edge deployment, 82.9 seconds in `npm ci`, 28.2 seconds updating `anthus-footer`, and 116.0 seconds in the Next.js build. Skipping backend+edge work and the unpinned dependency update gives an observed target of about 5m01s total Amplify `BUILD` time versus 9m37s for that run, assuming other phases remain similar. Without removing the dependency update the target is about 5m29s. Neither is guaranteed. Backend changes still deploy the backend in GitHub and still require the Amplify SSR build.
