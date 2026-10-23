@@ -83,7 +83,7 @@ try {
   assert.equal(workspaceInputsAreKnown(repository), false);
   rmSync(join(repository, "unexpected.generated"));
 
-  const marker = makeMarker({ fingerprint: baseline, commit: baselineCommit });
+  const marker = makeMarker({ fingerprint: baseline, commit: baselineCommit, jobId: "job-previous", jobStartTime: 1000 });
   assert.equal(marker.schemaVersion, MARKER_VERSION);
   assert.equal(marker.accountId, ACCOUNT_ID);
   assert.equal(marker.appId, APP_ID);
@@ -100,12 +100,18 @@ try {
     fingerprint: afterFrontendFingerprint,
     commit: frontendCommit,
     currentJobId: "job-current",
-    jobs: [{ jobId: "job-current", status: "RUNNING" }],
+    jobs: [
+      { jobId: "job-current", status: "RUNNING", startTime: "1970-01-01T00:00:02.000Z" },
+      { jobId: "job-previous", status: "SUCCEED", startTime: "1970-01-01T00:00:01.000Z" },
+      { jobId: "job-older", status: "SUCCEED", startTime: "1970-01-01T00:00:00.500Z" },
+    ],
     cwd: repository,
   };
   assert.equal(canSkipBackend(safeToSkip), true);
-  assert.equal(canSkipBackend({ ...safeToSkip, jobs: [{ jobId: "job-current", status: "RUNNING" }, { jobId: "job-other", status: "PENDING" }] }), false);
-  assert.equal(canSkipBackend({ ...safeToSkip, jobs: [{ jobId: "other-job", status: "RUNNING" }] }), false);
+  assert.equal(canSkipBackend({ ...safeToSkip, jobs: [...safeToSkip.jobs, { jobId: "job-other", status: "PENDING", startTime: "1970-01-01T00:00:02.100Z" }] }), false);
+  assert.equal(canSkipBackend({ ...safeToSkip, jobs: [{ jobId: "other-job", status: "RUNNING", startTime: "1970-01-01T00:00:02.000Z" }] }), false);
+  assert.equal(canSkipBackend({ ...safeToSkip, jobs: [...safeToSkip.jobs, { jobId: "unguarded-success", status: "SUCCEED", startTime: "1970-01-01T00:00:01.500Z" }] }), false);
+  assert.equal(canSkipBackend({ ...safeToSkip, jobs: safeToSkip.jobs.filter((job) => job.jobId !== "job-previous") }), false);
   assert.equal(canSkipBackend({ ...safeToSkip, hasMoreJobs: true }), false);
   assert.equal(canSkipBackend({ ...safeToSkip, markerValue: null }), false);
 

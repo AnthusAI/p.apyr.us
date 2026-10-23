@@ -29,7 +29,16 @@ if (args[0] === "amplify" && args[1] === "list-jobs") {
   if (process.env.PAGINATE === "1") {
     if (args.includes("--next-token")) process.stdout.write(JSON.stringify({ jobSummaries: [{ jobId: "later-active", status: "RUNNING" }] }));
     else process.stdout.write(JSON.stringify({ jobSummaries: [{ jobId: process.env.AWS_JOB_ID, status: "RUNNING" }], nextToken: "second-page" }));
-  } else process.stdout.write(JSON.stringify({ jobSummaries: [{ jobId: process.env.AWS_JOB_ID, status: "RUNNING" }] }));
+  } else {
+    const markerPath = join(state, "marker.json");
+    const marker = existsSync(markerPath) ? JSON.parse(readFileSync(markerPath, "utf8")) : null;
+    const jobs = [{ jobId: process.env.AWS_JOB_ID, status: "RUNNING", startTime: "2026-10-23T21:00:02.000Z" }];
+    if (marker?.jobId) jobs.push({ jobId: marker.jobId, status: "SUCCEED", startTime: new Date(marker.jobStartTime).toISOString() });
+    if (process.env.PAGINATE_SUCCESS === "1") {
+      if (args.includes("--next-token")) process.stdout.write(JSON.stringify({ jobSummaries: [{ jobId: "older-terminal", status: "FAILED", startTime: "2026-10-23T20:00:00.000Z" }] }));
+      else process.stdout.write(JSON.stringify({ jobSummaries: jobs, nextToken: "second-page" }));
+    } else process.stdout.write(JSON.stringify({ jobSummaries: jobs }));
+  }
   process.exit(0);
 }
 if (args[0] === "ssm" && args[1] === "get-parameter") {
@@ -92,7 +101,7 @@ function createRepository() {
 }
 
 function writeMarker(cwd, commit) {
-  const marker = makeMarker({ fingerprint: fingerprintTree(commit, { ...process.env, AWS_REGION: "us-east-1" }, cwd), commit });
+  const marker = makeMarker({ fingerprint: fingerprintTree(commit, { ...process.env, AWS_REGION: "us-east-1" }, cwd), commit, jobId: "job-previous", jobStartTime: Date.parse("2026-10-23T21:00:00.000Z") });
   writeFileSync(markerPath, JSON.stringify(marker));
   return marker;
 }
@@ -139,12 +148,13 @@ try {
   assert.equal(JSON.parse(readFileSync(markerPath, "utf8")).schemaVersion, 0);
   assert.deepEqual(loggedNpxCalls().map((call) => call[0] === "papyrus-infra" ? "edge" : call[1]), ["edge", "pipeline-deploy"]);
 
-  clearState();
+  for (const path of [npmLog, putCountPath]) if (existsSync(path)) rmSync(path);
   writeFileSync(join(cwd, "backend.ts"), "backend A\n");
   git(cwd, "add", "backend.ts");
   git(cwd, "commit", "-m", "revert backend");
   const reverted = git(cwd, "rev-parse", "HEAD");
   assert.notEqual(reverted, initial);
+  assert.equal(JSON.parse(readFileSync(markerPath, "utf8")).schemaVersion, 0, "failed backend marker remains invalid across a revert");
   const recovery = runHelper(cwd);
   assert.equal(recovery.status, 0, recovery.stderr);
   assert.deepEqual(loggedNpxCalls().map((call) => call[0] === "papyrus-infra" ? "edge" : call[1]), ["edge", "pipeline-deploy"]);
@@ -179,6 +189,13 @@ try {
   assert.equal(skip.status, 0, skip.stderr);
   assert.match(skip.stdout, /deployment skipped/);
   assert.equal(loggedNpxCalls().length, 0);
+
+  clearState();
+  writeMarker(cwd, changed);
+  const paginatedTerminalHistory = runHelper(cwd, { PAGINATE_SUCCESS: "1" });
+  assert.equal(paginatedTerminalHistory.status, 0, paginatedTerminalHistory.stderr);
+  assert.match(paginatedTerminalHistory.stdout, /deployment skipped/);
+  assert.equal(loggedNpxCalls().length, 0, "complete multi-page history with no newer job allows a guarded skip");
 
   clearState();
   writeMarker(cwd, initial);

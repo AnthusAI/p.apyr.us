@@ -108,7 +108,7 @@ export function fingerprintTree(commit = "HEAD", env = process.env, cwd = proces
   return hash.digest("hex");
 }
 
-export function makeMarker({ fingerprint, commit }) {
+export function makeMarker({ fingerprint, commit, jobId, jobStartTime }) {
   return {
     schemaVersion: MARKER_VERSION,
     accountId: ACCOUNT_ID,
@@ -116,6 +116,8 @@ export function makeMarker({ fingerprint, commit }) {
     branch: "main",
     backendFingerprint: fingerprint,
     commit,
+    jobId: String(jobId),
+    jobStartTime,
   };
 }
 
@@ -130,6 +132,9 @@ export function isMatchingMarker(value, { fingerprint, commit }, cwd = process.c
       marker.backendFingerprint === fingerprint &&
       typeof marker.commit === "string" &&
       /^[a-f0-9]{40,64}$/.test(marker.commit) &&
+      typeof marker.jobId === "string" &&
+      Number.isFinite(marker.jobStartTime) &&
+      marker.jobStartTime > 0 &&
       typeof commit === "string" &&
       /^[a-f0-9]{40,64}$/.test(commit);
     if (!validIdentity) return false;
@@ -140,28 +145,43 @@ export function isMatchingMarker(value, { fingerprint, commit }, cwd = process.c
   }
 }
 
-export function jobsAllowSkip({ currentJobId, jobs, hasMoreJobs = false }) {
+export function jobsAllowSkip({ markerValue, currentJobId, jobs, hasMoreJobs = false }) {
   if (!currentJobId || hasMoreJobs || !Array.isArray(jobs)) return false;
+  let marker;
+  try {
+    marker = typeof markerValue === "string" ? JSON.parse(markerValue) : markerValue;
+  } catch {
+    return false;
+  }
+  if (!marker?.jobId || !Number.isFinite(marker.jobStartTime)) return false;
   let currentJobFound = false;
+  let markerJobFound = false;
   const terminalStates = new Set(["SUCCEED", "FAILED", "CANCELLED"]);
+  const toEpoch = (value) => typeof value === "number" ? value : Date.parse(value);
 
   for (const job of jobs) {
-    if (!job?.jobId || !job?.status) return false;
+    const jobStartTime = toEpoch(job?.startTime);
+    if (!job?.jobId || !job?.status || !Number.isFinite(jobStartTime)) return false;
     if (String(job.jobId) === String(currentJobId)) {
       if (job.status !== "RUNNING") return false;
       currentJobFound = true;
+    } else if (String(job.jobId) === String(marker.jobId)) {
+      if (job.status !== "SUCCEED" || jobStartTime !== marker.jobStartTime) return false;
+      markerJobFound = true;
     } else if (!terminalStates.has(job.status)) {
+      return false;
+    } else if (jobStartTime >= marker.jobStartTime) {
       return false;
     }
   }
 
-  return currentJobFound;
+  return currentJobFound && markerJobFound;
 }
 
 export function canSkipBackend({ markerValue, fingerprint, commit, currentJobId, jobs, hasMoreJobs = false, cwd = process.cwd() }) {
   return Boolean(markerValue) &&
     isMatchingMarker(markerValue, { fingerprint, commit }, cwd) &&
-    jobsAllowSkip({ currentJobId, jobs, hasMoreJobs });
+    jobsAllowSkip({ markerValue, currentJobId, jobs, hasMoreJobs });
 }
 
 function runAws(args, { allowFailure = false } = {}) {
@@ -212,8 +232,15 @@ function listMainJobs() {
   return null;
 }
 
-function hasOtherActiveMainJob(currentJobId) {
-  return !jobsAllowSkip({ currentJobId, jobs: listMainJobs() });
+function currentJobIsOnlyActive(jobs, currentJobId) {
+  if (!Array.isArray(jobs)) return false;
+  const current = jobs.find((job) => String(job?.jobId) === String(currentJobId));
+  if (!current || current.status !== "RUNNING") return false;
+  return jobs.every((job) => String(job?.jobId) === String(currentJobId) || ["SUCCEED", "FAILED", "CANCELLED"].includes(job?.status));
+}
+
+function mainJobsAreSerialized(currentJobId) {
+  return currentJobIsOnlyActive(listMainJobs(), currentJobId);
 }
 
 function run(command, args) {
@@ -252,10 +279,10 @@ function invalidateMarker() {
   ]);
 }
 
-function deployMainBackend({ fingerprint, commit } = {}) {
+function deployMainBackend({ fingerprint, commit, jobId, jobStartTime } = {}) {
   invalidateMarker();
   deployBackend();
-  if (fingerprint && commit) writeMarker(makeMarker({ fingerprint, commit }));
+  if (fingerprint && commit && jobId && jobStartTime) writeMarker(makeMarker({ fingerprint, commit, jobId, jobStartTime }));
 }
 
 export function main(env = process.env) {
@@ -271,7 +298,7 @@ export function main(env = process.env) {
     return "deployed";
   }
 
-  if (hasOtherActiveMainJob(env.AWS_JOB_ID)) {
+  if (!mainJobsAreSerialized(env.AWS_JOB_ID)) {
     throw new Error("Refusing main deployment because another job is active or the complete job queue could not be verified.");
   }
 
@@ -304,19 +331,33 @@ export function main(env = process.env) {
   }
 
   const priorValue = readMarker();
+  const jobs = listMainJobs();
   if (canSkipBackend({
     markerValue: priorValue,
     fingerprint,
     commit: head,
     currentJobId: env.AWS_JOB_ID,
-    jobs: [{ jobId: env.AWS_JOB_ID, status: "RUNNING" }],
+    jobs,
   })) {
+    const currentJob = jobs.find((job) => String(job.jobId) === String(env.AWS_JOB_ID));
+    const currentJobStartTime = typeof currentJob.startTime === "number" ? currentJob.startTime : Date.parse(currentJob.startTime);
+    try {
+      writeMarker(makeMarker({ fingerprint, commit: head, jobId: env.AWS_JOB_ID, jobStartTime: currentJobStartTime }));
+    } catch {
+      throw new Error("Unable to advance the guarded deployment marker; refusing to publish this frontend build.");
+    }
     console.log("Backend and edge deployment skipped: tracked backend inputs match the last successful deployment marker.");
     return "skipped";
   }
 
   console.log("Backend and edge deployment required: no valid marker matches the tracked backend inputs.");
-  deployMainBackend({ fingerprint, commit: head });
+  const currentJobs = listMainJobs();
+  if (!currentJobIsOnlyActive(currentJobs, env.AWS_JOB_ID)) {
+    throw new Error("Refusing main deployment because another job is active or the complete job queue could not be verified.");
+  }
+  const currentJob = Array.isArray(currentJobs) ? currentJobs.find((job) => String(job.jobId) === String(env.AWS_JOB_ID)) : null;
+  const currentJobStartTime = typeof currentJob?.startTime === "number" ? currentJob.startTime : Date.parse(currentJob?.startTime);
+  deployMainBackend({ fingerprint, commit: head, jobId: env.AWS_JOB_ID, jobStartTime: currentJobStartTime });
   return "deployed";
 }
 
