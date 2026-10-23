@@ -11,6 +11,7 @@ import {
   isMatchingMarker,
   canSkipBackend,
   makeMarker,
+  workspaceInputsAreKnown,
 } from "../bin/deploy-backend-if-needed.mjs";
 
 const repository = mkdtempSync(join(tmpdir(), "papyrus-backend-fingerprint-"));
@@ -32,12 +33,35 @@ try {
   git("init", "-q");
   git("config", "user.name", "Pipeline tests");
   git("config", "user.email", "pipeline-tests@example.invalid");
+  writeFileSync(join(repository, ".gitignore"), ".next/\n.npm/\nnode_modules/\namplify_outputs.json\n.amplify/\n");
+  git("add", ".gitignore");
+  mkdirSync(join(repository, "node_modules/@anthusai/papyrus"), { recursive: true });
+  writeFileSync(join(repository, "node_modules/@anthusai/papyrus/amplify-backend.js"), "export {};\n");
   commitFile("app/page.tsx", "export default function Page() { return null; }\n");
   commitFile("components/marketing/MarketingPage.tsx", "export const MarketingPage = () => null;\n");
   commitFile("package-lock.json", "{\"lockfileVersion\":3}\n");
   commitFile("amplify/backend.ts", "export {};\n");
   const baselineCommit = git("rev-parse", "HEAD");
   const baseline = fingerprintTree(baselineCommit, {}, repository);
+  assert.equal(workspaceInputsAreKnown(repository), true);
+  mkdirSync(join(repository, ".next/cache"), { recursive: true });
+  writeFileSync(join(repository, ".next/cache/build-data"), "cached\n");
+  mkdirSync(join(repository, ".npm"), { recursive: true });
+  writeFileSync(join(repository, ".npm/cache-data"), "cached\n");
+  assert.equal(workspaceInputsAreKnown(repository), true);
+  rmSync(join(repository, ".next"), { recursive: true, force: true });
+  rmSync(join(repository, ".npm"), { recursive: true, force: true });
+
+  writeFileSync(join(repository, "amplify_outputs.json"), "{\"storage\":{\"bucket_name\":\"bucket-a\"}}\n");
+  const outputStateFingerprint = fingerprintTree(baselineCommit, {}, repository);
+  assert.notEqual(outputStateFingerprint, baseline);
+  writeFileSync(join(repository, "amplify_outputs.json"), "{\"storage\":{\"bucket_name\":\"bucket-b\"}}\n");
+  assert.notEqual(fingerprintTree(baselineCommit, {}, repository), outputStateFingerprint);
+  rmSync(join(repository, "amplify_outputs.json"));
+
+  writeFileSync(join(repository, "node_modules/@anthusai/papyrus/amplify-backend.js"), "export const backend = true;\n");
+  assert.notEqual(fingerprintTree(baselineCommit, {}, repository), baseline);
+  writeFileSync(join(repository, "node_modules/@anthusai/papyrus/amplify-backend.js"), "export {};\n");
 
   const frontendCommit = commitFile("components/marketing/MarketingPage.tsx", "export const MarketingPage = () => <main />;\n");
   assert.equal(fingerprintTree(frontendCommit, {}, repository), baseline);
@@ -47,7 +71,17 @@ try {
 
   const envFingerprint = fingerprintTree(lockfileCommit, { PAPYRUS_FEATURE: "enabled" }, repository);
   assert.notEqual(envFingerprint, fingerprintTree(lockfileCommit, { PAPYRUS_FEATURE: "disabled" }, repository));
+  assert.notEqual(fingerprintTree(lockfileCommit, { AMPLIFY_SSM_ENV_CONFIG: "{\"secret\":{\"path\":\"/a\"}}" }, repository), fingerprintTree(lockfileCommit, { AMPLIFY_SSM_ENV_CONFIG: "{\"secret\":{\"path\":\"/b\"}}" }, repository));
+  assert.notEqual(fingerprintTree(lockfileCommit, { NEXT_PUBLIC_PAPYRUS_SITE_BRAND: "brand-a" }, repository), fingerprintTree(lockfileCommit, { NEXT_PUBLIC_PAPYRUS_SITE_BRAND: "brand-b" }, repository));
   assert.equal(fingerprintTree(lockfileCommit, { NEXT_PUBLIC_LABEL: "one" }, repository), fingerprintTree(lockfileCommit, { NEXT_PUBLIC_LABEL: "two" }, repository));
+
+  mkdirSync(join(repository, ".amplify"), { recursive: true });
+  writeFileSync(join(repository, ".amplify/ignored-generated-config.json"), "{}\n");
+  assert.equal(workspaceInputsAreKnown(repository), false);
+  rmSync(join(repository, ".amplify"), { recursive: true, force: true });
+  writeFileSync(join(repository, "unexpected.generated"), "unknown\n");
+  assert.equal(workspaceInputsAreKnown(repository), false);
+  rmSync(join(repository, "unexpected.generated"));
 
   const marker = makeMarker({ fingerprint: baseline, commit: baselineCommit });
   assert.equal(marker.schemaVersion, MARKER_VERSION);

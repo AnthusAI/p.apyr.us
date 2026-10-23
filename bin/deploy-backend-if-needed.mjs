@@ -1,6 +1,7 @@
 import { createHash } from "node:crypto";
 import { execFileSync, spawnSync } from "node:child_process";
-import { resolve } from "node:path";
+import { existsSync, lstatSync, readdirSync, readFileSync } from "node:fs";
+import { join, relative, resolve, sep } from "node:path";
 import { fileURLToPath } from "node:url";
 
 export const APP_ID = "ds6yswxui41yi";
@@ -10,9 +11,54 @@ export const MARKER_NAME = "/papyrus/amplify/ds6yswxui41yi/main/backend-deploy-m
 export const MARKER_VERSION = 1;
 
 const frontendOnlyPaths = new Set(["app/page.tsx"]);
+const knownBuildCachePaths = new Set([".next/", ".npm/", "node_modules/"]);
 
 export function isFrontendOnlyPath(path) {
   return frontendOnlyPaths.has(path) || path.startsWith("components/marketing/");
+}
+
+export function workspaceInputsAreKnown(cwd = process.cwd()) {
+  try {
+    const status = execFileSync("git", ["status", "--porcelain=v1", "-z", "--untracked-files=all", "--ignored=matching"], {
+      encoding: "buffer",
+      stdio: ["ignore", "pipe", "pipe"],
+      cwd,
+    }).toString("utf8");
+    for (const entry of status.split("\0")) {
+      if (!entry) continue;
+      const state = entry.slice(0, 2);
+      const path = entry.slice(3);
+      if (state === "!!" && (knownBuildCachePaths.has(path) || path === "amplify_outputs.json")) continue;
+      return false;
+    }
+    return true;
+  } catch {
+    return false;
+  }
+}
+
+function hashDirectory(hash, directory, root = directory) {
+  for (const name of readdirSync(directory).sort()) {
+    const path = join(directory, name);
+    const pathFromRoot = relative(root, path).split(sep).join("/");
+    const stat = lstatSync(path);
+    hash.update(pathFromRoot);
+    hash.update("\0");
+    if (stat.isSymbolicLink()) {
+      hash.update("symlink\0");
+      hash.update(readFileSync(path, "utf8"));
+      hash.update("\0");
+    } else if (stat.isDirectory()) {
+      hash.update("directory\0");
+      hashDirectory(hash, path, root);
+    } else if (stat.isFile()) {
+      hash.update("file\0");
+      hash.update(readFileSync(path));
+      hash.update("\0");
+    } else {
+      throw new Error(`Unsupported installed package input: ${pathFromRoot}`);
+    }
+  }
 }
 
 export function fingerprintTree(commit = "HEAD", env = process.env, cwd = process.cwd()) {
@@ -35,13 +81,29 @@ export function fingerprintTree(commit = "HEAD", env = process.env, cwd = proces
   }
 
   for (const [name, value] of Object.entries(env)
-    .filter(([name]) => name.startsWith("PAPYRUS_") || name === "SITE_ENV")
+    .filter(([name]) => name.startsWith("PAPYRUS_") || ["SITE_ENV", "AMPLIFY_SSM_ENV_CONFIG", "NEXT_PUBLIC_PAPYRUS_SITE_BRAND"].includes(name))
     .sort(([left], [right]) => left.localeCompare(right))) {
     hash.update(name);
     hash.update("\0");
     hash.update(value);
     hash.update("\0");
   }
+
+  hash.update(`runtime\0${process.version}\0${process.platform}\0${process.arch}\0${env.npm_config_user_agent ?? ""}\0${env.AWS_REGION ?? ""}\0`);
+  const outputsPath = join(cwd, "amplify_outputs.json");
+  if (existsSync(outputsPath)) {
+    hash.update("amplify_outputs.json\0");
+    hash.update(readFileSync(outputsPath));
+    hash.update("\0");
+  } else {
+    hash.update("amplify_outputs.json\0missing\0");
+  }
+
+  const papyrusPackage = join(cwd, "node_modules/@anthusai/papyrus");
+  if (!existsSync(papyrusPackage) || !lstatSync(papyrusPackage).isDirectory()) {
+    throw new Error("Installed Papyrus package is unavailable for fingerprinting");
+  }
+  hashDirectory(hash, papyrusPackage, papyrusPackage);
 
   return hash.digest("hex");
 }
@@ -119,24 +181,39 @@ function readMarker() {
   return value || null;
 }
 
-function hasOtherActiveMainJob(currentJobId) {
-  const output = runAws([
-    "amplify", "list-jobs", "--app-id", APP_ID, "--branch-name", "main",
-    "--region", REGION, "--max-items", "100", "--output", "json",
-  ], { allowFailure: true });
-  if (!output) return true;
+function listMainJobs() {
+  const allJobs = [];
+  const seenTokens = new Set();
+  let nextToken;
 
-  let response;
-  try {
-    response = JSON.parse(output);
-  } catch {
-    return true;
+  for (let page = 0; page < 100; page += 1) {
+    const args = [
+      "amplify", "list-jobs", "--no-paginate", "--app-id", APP_ID, "--branch-name", "main",
+      "--region", REGION, "--max-results", "50", "--output", "json",
+    ];
+    if (nextToken) args.push("--next-token", nextToken);
+    const output = runAws(args, { allowFailure: true });
+    if (!output) return null;
+
+    let response;
+    try {
+      response = JSON.parse(output);
+    } catch {
+      return null;
+    }
+    if (!Array.isArray(response.jobSummaries)) return null;
+    allJobs.push(...response.jobSummaries);
+    nextToken = response.nextToken ?? response.NextToken;
+    if (!nextToken) return allJobs;
+    if (seenTokens.has(nextToken)) return null;
+    seenTokens.add(nextToken);
   }
-  return !jobsAllowSkip({
-    currentJobId,
-    jobs: response.jobSummaries,
-    hasMoreJobs: Boolean(response.NextToken || response.nextToken),
-  });
+
+  return null;
+}
+
+function hasOtherActiveMainJob(currentJobId) {
+  return !jobsAllowSkip({ currentJobId, jobs: listMainJobs() });
 }
 
 function run(command, args) {
@@ -168,6 +245,19 @@ function writeMarker(marker) {
   ]);
 }
 
+function invalidateMarker() {
+  runAws([
+    "ssm", "put-parameter", "--name", MARKER_NAME, "--type", "String", "--overwrite",
+    "--value", JSON.stringify({ schemaVersion: 0, invalidated: true }), "--region", REGION,
+  ]);
+}
+
+function deployMainBackend({ fingerprint, commit } = {}) {
+  invalidateMarker();
+  deployBackend();
+  if (fingerprint && commit) writeMarker(makeMarker({ fingerprint, commit }));
+}
+
 export function main(env = process.env) {
   if (env.AWS_APP_ID !== APP_ID) throw new Error(`Refusing unexpected Amplify app ID: ${env.AWS_APP_ID ?? "missing"}`);
   if (!env.AWS_BRANCH) throw new Error("Refusing to deploy because Amplify branch identity is missing.");
@@ -181,16 +271,26 @@ export function main(env = process.env) {
     return "deployed";
   }
 
+  if (hasOtherActiveMainJob(env.AWS_JOB_ID)) {
+    throw new Error("Refusing main deployment because another job is active or the complete job queue could not be verified.");
+  }
+
   if (!env.AWS_COMMIT_ID) {
     console.log("Backend deployment required: Amplify commit identity is missing.");
-    deployBackend();
+    deployMainBackend();
     return "deployed";
   }
 
   const head = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
   if (head !== env.AWS_COMMIT_ID) {
     console.log("Backend deployment required: checkout does not match Amplify commit.");
-    deployBackend();
+    deployMainBackend();
+    return "deployed";
+  }
+
+  if (!workspaceInputsAreKnown()) {
+    console.log("Backend deployment required: the build workspace contains unknown or modified inputs.");
+    deployMainBackend();
     return "deployed";
   }
 
@@ -199,15 +299,7 @@ export function main(env = process.env) {
     fingerprint = fingerprintTree(head, env);
   } catch {
     console.log("Backend deployment required: unable to calculate the tracked-input fingerprint.");
-    deployBackend();
-    return "deployed";
-  }
-
-  const currentJobIsConcurrent = hasOtherActiveMainJob(env.AWS_JOB_ID);
-  if (currentJobIsConcurrent) {
-    console.log("Backend deployment required: another main-branch job is active or concurrency could not be verified.");
-    deployBackend();
-    writeMarker(makeMarker({ fingerprint, commit: head }));
+    deployMainBackend();
     return "deployed";
   }
 
@@ -224,14 +316,15 @@ export function main(env = process.env) {
   }
 
   console.log("Backend and edge deployment required: no valid marker matches the tracked backend inputs.");
-  deployBackend();
-  writeMarker(makeMarker({ fingerprint, commit: head }));
+  deployMainBackend({ fingerprint, commit: head });
   return "deployed";
 }
 
 if (process.argv[1] && fileURLToPath(import.meta.url) === resolve(process.argv[1])) {
-  main().catch((error) => {
+  try {
+    main();
+  } catch (error) {
     console.error(error.message);
     process.exitCode = 1;
-  });
+  }
 }

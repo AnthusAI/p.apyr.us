@@ -11,8 +11,7 @@ frontend:
     build:
       commands:
         - env | grep -e '^PAPYRUS_' -e '^SITE_ENV=' -e '^NEXT_PUBLIC_' >> .env.production
-        - npx ampx generate outputs --branch "$AWS_BRANCH" --app-id "$AWS_APP_ID"
-        - npx papyrus-app sync && npm run build
+        - npx ampx generate outputs --branch "$AWS_BRANCH" --app-id "$AWS_APP_ID" && npx papyrus-app sync && npm run build
         - cp amplify_outputs.json .next/amplify_outputs.json
   artifacts:
     baseDirectory: .next
