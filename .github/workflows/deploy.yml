@@ -1,7 +1,6 @@
-# Merge to main deploys: CI runs here (this repository is public, so Actions minutes are free);
-# a green push to main starts the Amplify job for that exact commit through GitHub OIDC.
-# No AWS keys are stored: the role trusts repo:AnthusAI/p.apyr.us:ref:refs/heads/main only and may only
-# start and read jobs on this app's main branch. Amplify's own auto-build is off on main.
+# Merge to main deploys: CI runs here (this repository is public, so Actions minutes are free).
+# A successful push deploys the backend only when tracked inputs changed, then starts the existing
+# Amplify Hosting job for that exact commit. No AWS keys are stored; main's auto-build is off.
 # Defined by the Papyrus app shell (docs/site-hosting.md, "Deploy on merge to main").
 name: CI and deploy
 
@@ -33,8 +32,93 @@ jobs:
       - run: npx tsc --noEmit
       - run: npm test
 
-  deploy:
+  deploy-backend:
     needs: ci
+    if: github.event_name == 'push' && github.ref == 'refs/heads/main'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    permissions:
+      id-token: write
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          role-to-assume: ${{ vars.P_APYR_BACKEND_DEPLOY_ROLE_ARN }}
+          aws-region: us-east-1
+          role-session-name: gh-backend-${{ github.run_id }}
+
+      - name: Read backend configuration revision
+        id: config-revision
+        run: echo "revision=$(cat infra/backend-config-revision.txt)" >> "$GITHUB_OUTPUT"
+
+      - name: Read last successful backend commit
+        id: marker
+        env:
+          MARKER_PARAMETER: /papyrus/amplify/ds6yswxui41yi/main/backend-commit
+        shell: bash
+        run: |
+          set -euo pipefail
+          if marker="$(aws ssm get-parameter --name "$MARKER_PARAMETER" --query 'Parameter.Value' --output text 2>/dev/null)" \
+            && [[ "$marker" =~ ^([0-9a-f]{40})\|([0-9]+)$ ]]; then
+            echo "base_sha=${BASH_REMATCH[1]}" >> "$GITHUB_OUTPUT"
+            echo "base_config_revision=${BASH_REMATCH[2]}" >> "$GITHUB_OUTPUT"
+          else
+            echo "base_sha=" >> "$GITHUB_OUTPUT"
+            echo "base_config_revision=" >> "$GITHUB_OUTPUT"
+            echo "::notice::No usable backend commit marker; deploying the backend conservatively."
+          fi
+
+      - name: Decide whether backend deployment is required
+        id: plan
+        env:
+          PAPYRUS_BACKEND_BASE_SHA: ${{ steps.marker.outputs.base_sha }}
+          PAPYRUS_BACKEND_BASE_CONFIG_REVISION: ${{ steps.marker.outputs.base_config_revision }}
+          PAPYRUS_BACKEND_CONFIG_REVISION: ${{ steps.config-revision.outputs.revision }}
+          GITHUB_SHA: ${{ github.sha }}
+        run: node scripts/should-deploy-backend.mjs
+
+      - name: Install deployment dependencies
+        if: steps.plan.outputs.deploy_backend == 'true'
+        run: npm ci --prefer-offline
+
+      - name: Deploy edge configuration
+        if: steps.plan.outputs.deploy_backend == 'true'
+        run: >-
+          npx papyrus-infra deploy-edge
+          --stack papyrus-edge-p-apyr-us
+          --template infra/edge/p-apyr-us-edge.yaml
+          --adoption-template infra/edge/p-apyr-us-edge-adoption.yaml
+          --adopt-resources infra/edge/adopt-resources.json
+          --parameter ReaderCertificateArn=arn:aws:acm:us-east-1:712236451410:certificate/5daf7da4-bdc1-42fe-93c4-a4fe2f948805
+          --parameter SiteBucketRegionalDomainName=amplify-ds6yswxui41yi-main-bran-sitebucket397a1860-y3dzuduvsux5.s3.us-east-1.amazonaws.com
+          --parameter RedirectsKeyValueStoreArn=arn:aws:cloudfront::712236451410:key-value-store/27bad446-124c-42fd-86cd-11bf831baf97
+          --only-branch main
+          --only-app-id ds6yswxui41yi
+
+      - name: Deploy Amplify backend
+        if: steps.plan.outputs.deploy_backend == 'true'
+        env:
+          CI: '1'
+        run: npx ampx pipeline-deploy --branch main --app-id ds6yswxui41yi
+
+      - name: Record successful backend commit
+        if: steps.plan.outputs.deploy_backend == 'true'
+        env:
+          MARKER_PARAMETER: /papyrus/amplify/ds6yswxui41yi/main/backend-commit
+          CONFIG_REVISION: ${{ steps.config-revision.outputs.revision }}
+        run: aws ssm put-parameter --name "$MARKER_PARAMETER" --type String --value "$GITHUB_SHA|$CONFIG_REVISION" --overwrite
+
+  deploy:
+    needs: [ci, deploy-backend]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     permissions:
       id-token: write
