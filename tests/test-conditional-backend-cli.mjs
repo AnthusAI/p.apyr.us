@@ -26,14 +26,15 @@ const args = process.argv.slice(2);
 const state = process.env.FAKE_STATE;
 if (args[0] === "sts") { process.stdout.write("712236451410\\n"); process.exit(0); }
 if (args[0] === "amplify" && args[1] === "list-jobs") {
+  const currentJobId = String(process.env.AWS_JOB_ID).replace(/^0+(?=\\d)/, "");
   if (process.env.PAGINATE === "1") {
     if (args.includes("--next-token")) process.stdout.write(JSON.stringify({ jobSummaries: [{ jobId: "later-active", status: "RUNNING" }] }));
-    else process.stdout.write(JSON.stringify({ jobSummaries: [{ jobId: process.env.AWS_JOB_ID, status: "RUNNING" }], nextToken: "second-page" }));
+    else process.stdout.write(JSON.stringify({ jobSummaries: [{ jobId: currentJobId, status: "RUNNING", startTime: "2026-10-23T21:00:02.000Z" }], nextToken: "second-page" }));
   } else {
     const markerPath = join(state, "marker.json");
     const marker = existsSync(markerPath) ? JSON.parse(readFileSync(markerPath, "utf8")) : null;
-    const jobs = [{ jobId: process.env.AWS_JOB_ID, status: "RUNNING", startTime: "2026-10-23T21:00:02.000Z" }];
-    if (marker?.jobId) jobs.push({ jobId: marker.jobId, status: "SUCCEED", startTime: new Date(marker.jobStartTime).toISOString() });
+    const jobs = [{ jobId: currentJobId, status: "RUNNING", startTime: "2026-10-23T21:00:02.000Z" }];
+    if (marker?.jobId) jobs.push({ jobId: String(marker.jobId).replace(/^0+(?=\\d)/, ""), status: "SUCCEED", startTime: new Date(marker.jobStartTime).toISOString() });
     if (process.env.PAGINATE_SUCCESS === "1") {
       if (args.includes("--next-token")) process.stdout.write(JSON.stringify({ jobSummaries: [{ jobId: "older-terminal", status: "FAILED", startTime: "2026-10-23T20:00:00.000Z" }] }));
       else process.stdout.write(JSON.stringify({ jobSummaries: jobs, nextToken: "second-page" }));
@@ -101,7 +102,7 @@ function createRepository() {
 }
 
 function writeMarker(cwd, commit) {
-  const marker = makeMarker({ fingerprint: fingerprintTree(commit, { ...process.env, AWS_REGION: "us-east-1" }, cwd), commit, jobId: "job-previous", jobStartTime: Date.parse("2026-10-23T21:00:00.000Z") });
+  const marker = makeMarker({ fingerprint: fingerprintTree(commit, { ...process.env, AWS_REGION: "us-east-1" }, cwd), commit, jobId: "0000000010", jobStartTime: Date.parse("2026-10-23T21:00:00.000Z") });
   writeFileSync(markerPath, JSON.stringify(marker));
   return marker;
 }
@@ -114,7 +115,7 @@ function childEnv(cwd, overrides = {}) {
     NPX_LOG: npmLog,
     AWS_APP_ID: "ds6yswxui41yi",
     AWS_BRANCH: "main",
-    AWS_JOB_ID: "job-current",
+    AWS_JOB_ID: "0000000001",
     AWS_COMMIT_ID: git(cwd, "rev-parse", "HEAD"),
     AWS_REGION: "us-east-1",
     ...overrides,
