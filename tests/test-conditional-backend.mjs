@@ -13,6 +13,7 @@ import {
   makeMarker,
   normalizeJobId,
   workspaceInputsAreKnown,
+  unknownWorkspaceInputs,
 } from "../bin/deploy-backend-if-needed.mjs";
 
 const repository = mkdtempSync(join(tmpdir(), "papyrus-backend-fingerprint-"));
@@ -79,6 +80,7 @@ try {
   mkdirSync(join(repository, ".amplify"), { recursive: true });
   writeFileSync(join(repository, ".amplify/ignored-generated-config.json"), "{}\n");
   assert.equal(workspaceInputsAreKnown(repository), false);
+  assert.deepEqual(unknownWorkspaceInputs(repository), ["!! .amplify/"]);
   rmSync(join(repository, ".amplify"), { recursive: true, force: true });
   writeFileSync(join(repository, "unexpected.generated"), "unknown\n");
   assert.equal(workspaceInputsAreKnown(repository), false);
