@@ -33,6 +33,11 @@ export function unknownWorkspaceInputs(cwd = process.cwd()) {
       if (!entry) continue;
       const state = entry.slice(0, 2);
       const path = entry.slice(3);
+      if (state === "??" && path === "amplify.sh") {
+        try {
+          if (lstatSync(join(cwd, path)).isFile()) continue;
+        } catch {}
+      }
       if (state === "!!" && (knownBuildCachePaths.has(path) || path === "amplify_outputs.json")) continue;
       unknown.push(`${state} ${path}`);
     }
@@ -102,6 +107,17 @@ export function fingerprintTree(commit = "HEAD", env = process.env, cwd = proces
     hash.update("\0");
   } else {
     hash.update("amplify_outputs.json\0missing\0");
+  }
+
+  const amplifyWrapperPath = join(cwd, "amplify.sh");
+  try {
+    if (!lstatSync(amplifyWrapperPath).isFile()) throw new Error("Amplify build wrapper is not a regular file");
+    hash.update("amplify-build-wrapper\0");
+    hash.update(readFileSync(amplifyWrapperPath));
+    hash.update("\0");
+  } catch (error) {
+    if (error?.code !== "ENOENT") throw error;
+    hash.update("amplify-build-wrapper\0missing\0");
   }
 
   const papyrusPackage = join(cwd, "node_modules/@anthusai/papyrus");
