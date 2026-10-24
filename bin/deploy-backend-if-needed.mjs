@@ -243,13 +243,9 @@ function listMainJobs() {
 
 function currentJobIsOnlyActive(jobs, currentJobId) {
   if (!Array.isArray(jobs)) return false;
-  const current = jobs.find((job) => sameJobId(job?.jobId, currentJobId));
-  if (!current || current.status !== "RUNNING") return false;
+  const currentJobs = jobs.filter((job) => sameJobId(job?.jobId, currentJobId));
+  if (currentJobs.length !== 1 || currentJobs[0].status !== "RUNNING") return false;
   return jobs.every((job) => sameJobId(job?.jobId, currentJobId) || ["SUCCEED", "FAILED", "CANCELLED"].includes(job?.status));
-}
-
-function mainJobsAreSerialized(currentJobId) {
-  return currentJobIsOnlyActive(listMainJobs(), currentJobId);
 }
 
 function run(command, args) {
@@ -307,21 +303,24 @@ export function main(env = process.env) {
     return "deployed";
   }
 
-  if (!mainJobsAreSerialized(env.AWS_JOB_ID)) {
+  const jobs = listMainJobs();
+  if (!currentJobIsOnlyActive(jobs, env.AWS_JOB_ID)) {
     throw new Error("Refusing main deployment because another job is active or the complete job queue could not be verified.");
   }
 
-  if (!env.AWS_COMMIT_ID) {
-    console.log("Backend deployment required: Amplify commit identity is missing.");
-    deployMainBackend();
-    return "deployed";
+  const currentJob = jobs.find((job) => sameJobId(job.jobId, env.AWS_JOB_ID));
+  const commit = currentJob.commitId;
+  const jobStartTime = typeof currentJob.startTime === "number" ? currentJob.startTime : Date.parse(currentJob.startTime);
+  if (typeof commit !== "string" || !/^[a-f0-9]{40,64}$/.test(commit) || !Number.isFinite(jobStartTime) || jobStartTime <= 0) {
+    throw new Error("Refusing main deployment because the current Amplify job lacks a verifiable commit and start time.");
+  }
+  if (env.AWS_COMMIT_ID && env.AWS_COMMIT_ID !== commit) {
+    throw new Error("Refusing main deployment because the Amplify commit environment value does not match its job record.");
   }
 
   const head = execFileSync("git", ["rev-parse", "HEAD"], { encoding: "utf8" }).trim();
-  if (head !== env.AWS_COMMIT_ID) {
-    console.log("Backend deployment required: checkout does not match Amplify commit.");
-    deployMainBackend();
-    return "deployed";
+  if (head !== commit) {
+    throw new Error("Refusing main deployment because the checkout does not match the Amplify job commit.");
   }
 
   if (!workspaceInputsAreKnown()) {
@@ -340,7 +339,6 @@ export function main(env = process.env) {
   }
 
   const priorValue = readMarker();
-  const jobs = listMainJobs();
   if (canSkipBackend({
     markerValue: priorValue,
     fingerprint,
@@ -348,10 +346,8 @@ export function main(env = process.env) {
     currentJobId: env.AWS_JOB_ID,
     jobs,
   })) {
-    const currentJob = jobs.find((job) => sameJobId(job.jobId, env.AWS_JOB_ID));
-    const currentJobStartTime = typeof currentJob.startTime === "number" ? currentJob.startTime : Date.parse(currentJob.startTime);
     try {
-      writeMarker(makeMarker({ fingerprint, commit: head, jobId: env.AWS_JOB_ID, jobStartTime: currentJobStartTime }));
+      writeMarker(makeMarker({ fingerprint, commit: head, jobId: env.AWS_JOB_ID, jobStartTime }));
     } catch {
       throw new Error("Unable to advance the guarded deployment marker; refusing to publish this frontend build.");
     }
@@ -364,9 +360,12 @@ export function main(env = process.env) {
   if (!currentJobIsOnlyActive(currentJobs, env.AWS_JOB_ID)) {
     throw new Error("Refusing main deployment because another job is active or the complete job queue could not be verified.");
   }
-  const currentJob = Array.isArray(currentJobs) ? currentJobs.find((job) => sameJobId(job.jobId, env.AWS_JOB_ID)) : null;
-  const currentJobStartTime = typeof currentJob?.startTime === "number" ? currentJob.startTime : Date.parse(currentJob?.startTime);
-  deployMainBackend({ fingerprint, commit: head, jobId: env.AWS_JOB_ID, jobStartTime: currentJobStartTime });
+  const latestCurrentJob = currentJobs.find((job) => sameJobId(job.jobId, env.AWS_JOB_ID));
+  const latestStartTime = typeof latestCurrentJob.startTime === "number" ? latestCurrentJob.startTime : Date.parse(latestCurrentJob.startTime);
+  if (latestCurrentJob.commitId !== commit || latestStartTime !== jobStartTime) {
+    throw new Error("Refusing main deployment because the current Amplify job identity changed during validation.");
+  }
+  deployMainBackend({ fingerprint, commit, jobId: env.AWS_JOB_ID, jobStartTime });
   return "deployed";
 }
 

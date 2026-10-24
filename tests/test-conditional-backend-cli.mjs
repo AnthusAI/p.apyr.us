@@ -15,6 +15,7 @@ const npxPath = join(fakeBin, "npx");
 const markerPath = join(state, "marker.json");
 const npmLog = join(state, "npx.jsonl");
 const putCountPath = join(state, "put-count");
+const listCountPath = join(state, "list-count");
 
 mkdirSync(fakeBin, { recursive: true });
 mkdirSync(state, { recursive: true });
@@ -26,15 +27,20 @@ const args = process.argv.slice(2);
 const state = process.env.FAKE_STATE;
 if (args[0] === "sts") { process.stdout.write("712236451410\\n"); process.exit(0); }
 if (args[0] === "amplify" && args[1] === "list-jobs") {
+  const listCount = Number(existsSync(process.env.LIST_COUNT_PATH) ? readFileSync(process.env.LIST_COUNT_PATH, "utf8") : "0") + 1;
+  writeFileSync(process.env.LIST_COUNT_PATH, String(listCount));
   const currentJobId = String(process.env.AWS_JOB_ID).replace(/^0+(?=\\d)/, "");
   if (process.env.PAGINATE === "1") {
     if (args.includes("--next-token")) process.stdout.write(JSON.stringify({ jobSummaries: [{ jobId: "later-active", status: "RUNNING" }] }));
-    else process.stdout.write(JSON.stringify({ jobSummaries: [{ jobId: currentJobId, status: "RUNNING", startTime: "2026-10-23T21:00:02.000Z" }], nextToken: "second-page" }));
+    else process.stdout.write(JSON.stringify({ jobSummaries: [{ jobId: currentJobId, status: "RUNNING", startTime: "2026-10-23T21:00:02.000Z", commitId: process.env.FAKE_COMMIT_ID }], nextToken: "second-page" }));
   } else {
     const markerPath = join(state, "marker.json");
     const marker = existsSync(markerPath) ? JSON.parse(readFileSync(markerPath, "utf8")) : null;
-    const jobs = [{ jobId: currentJobId, status: "RUNNING", startTime: "2026-10-23T21:00:02.000Z" }];
+    const jobs = [{ jobId: currentJobId, status: "RUNNING", startTime: "2026-10-23T21:00:02.000Z", commitId: process.env.FAKE_COMMIT_ID }];
     if (marker?.jobId) jobs.push({ jobId: String(marker.jobId).replace(/^0+(?=\\d)/, ""), status: "SUCCEED", startTime: new Date(marker.jobStartTime).toISOString() });
+    if (process.env.DUPLICATE_CURRENT_JOB === "first" || (process.env.DUPLICATE_CURRENT_JOB === "second" && listCount === 2)) {
+      jobs.push({ jobId: "00000000" + currentJobId, status: "FAILED", startTime: "2026-10-23T21:00:03.000Z", commitId: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" });
+    }
     if (process.env.PAGINATE_SUCCESS === "1") {
       if (args.includes("--next-token")) process.stdout.write(JSON.stringify({ jobSummaries: [{ jobId: "older-terminal", status: "FAILED", startTime: "2026-10-23T20:00:00.000Z" }] }));
       else process.stdout.write(JSON.stringify({ jobSummaries: jobs, nextToken: "second-page" }));
@@ -112,18 +118,20 @@ function childEnv(cwd, overrides = {}) {
     ...process.env,
     PATH: fakeBin + ":" + process.env.PATH,
     FAKE_STATE: state,
+    LIST_COUNT_PATH: listCountPath,
     NPX_LOG: npmLog,
     AWS_APP_ID: "ds6yswxui41yi",
     AWS_BRANCH: "main",
     AWS_JOB_ID: "0000000001",
     AWS_COMMIT_ID: git(cwd, "rev-parse", "HEAD"),
+    FAKE_COMMIT_ID: git(cwd, "rev-parse", "HEAD"),
     AWS_REGION: "us-east-1",
     ...overrides,
   };
 }
 
 function clearState() {
-  for (const path of [markerPath, npmLog, putCountPath]) {
+  for (const path of [markerPath, npmLog, putCountPath, listCountPath]) {
     if (existsSync(path)) rmSync(path);
   }
 }
@@ -160,6 +168,16 @@ try {
   assert.equal(recovery.status, 0, recovery.stderr);
   assert.deepEqual(loggedNpxCalls().map((call) => call[0] === "papyrus-infra" ? "edge" : call[1]), ["edge", "pipeline-deploy"]);
   assert.equal(JSON.parse(readFileSync(markerPath, "utf8")).backendFingerprint, fingerprintTree(reverted, { ...process.env, AWS_REGION: "us-east-1" }, cwd));
+  assert.equal(JSON.parse(readFileSync(markerPath, "utf8")).commit, reverted, "successful deployment records the commit from the Amplify job summary");
+
+  clearState();
+  git(cwd, "checkout", "--detach", changed);
+  writeMarker(cwd, initial);
+  const backendDeployWithoutCommitEnvironment = runHelper(cwd, { AWS_COMMIT_ID: "" });
+  assert.equal(backendDeployWithoutCommitEnvironment.status, 0, backendDeployWithoutCommitEnvironment.stderr);
+  assert.deepEqual(loggedNpxCalls().map((call) => call[0] === "papyrus-infra" ? "edge" : call[1]), ["edge", "pipeline-deploy"]);
+  assert.equal(JSON.parse(readFileSync(markerPath, "utf8")).schemaVersion, 1);
+  assert.equal(JSON.parse(readFileSync(markerPath, "utf8")).commit, changed, "full deployment can record a success marker from the authoritative job summary without AWS_COMMIT_ID");
 
   clearState();
   git(cwd, "checkout", "--detach", changed);
@@ -185,11 +203,40 @@ try {
   assert.equal(JSON.parse(readFileSync(markerPath, "utf8")).backendFingerprint, fingerprintTree(changed, { ...process.env, AWS_REGION: "us-east-1" }, cwd));
 
   clearState();
+  const firstReadMarker = writeMarker(cwd, changed);
+  const duplicateCurrentJobOnFirstRead = runHelper(cwd, { DUPLICATE_CURRENT_JOB: "first" });
+  assert.notEqual(duplicateCurrentJobOnFirstRead.status, 0);
+  assert.equal(loggedNpxCalls().length, 0, "conflicting duplicate current-job records reject before deployment");
+  assert.deepEqual(JSON.parse(readFileSync(markerPath, "utf8")), firstReadMarker, "the marker remains unchanged when the first history read is ambiguous");
+
+  clearState();
+  git(cwd, "checkout", "--detach", changed);
+  const secondReadMarker = writeMarker(cwd, initial);
+  const duplicateCurrentJobOnSecondRead = runHelper(cwd, { DUPLICATE_CURRENT_JOB: "second" });
+  assert.notEqual(duplicateCurrentJobOnSecondRead.status, 0);
+  assert.equal(loggedNpxCalls().length, 0, "conflicting duplicate current-job records reject before backend mutation");
+  assert.deepEqual(JSON.parse(readFileSync(markerPath, "utf8")), secondReadMarker, "the marker remains unchanged when the second history read is ambiguous");
+
+  clearState();
   writeMarker(cwd, changed);
   const skip = runHelper(cwd);
   assert.equal(skip.status, 0, skip.stderr);
   assert.match(skip.stdout, /deployment skipped/);
   assert.equal(loggedNpxCalls().length, 0);
+
+  clearState();
+  writeMarker(cwd, changed);
+  const missingCommitEnvironment = runHelper(cwd, { AWS_COMMIT_ID: "" });
+  assert.equal(missingCommitEnvironment.status, 0, missingCommitEnvironment.stderr);
+  assert.match(missingCommitEnvironment.stdout, /deployment skipped/);
+  assert.equal(JSON.parse(readFileSync(markerPath, "utf8")).commit, changed);
+
+  clearState();
+  writeMarker(cwd, changed);
+  const mismatchedCommitEnvironment = runHelper(cwd, { AWS_COMMIT_ID: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" });
+  assert.notEqual(mismatchedCommitEnvironment.status, 0);
+  assert.equal(loggedNpxCalls().length, 0, "mismatched commit identity aborts before mutation");
+  assert.equal(JSON.parse(readFileSync(markerPath, "utf8")).backendFingerprint, fingerprintTree(changed, { ...process.env, AWS_REGION: "us-east-1" }, cwd));
 
   clearState();
   writeMarker(cwd, changed);
