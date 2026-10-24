@@ -18,22 +18,27 @@ export function isFrontendOnlyPath(path) {
 }
 
 export function workspaceInputsAreKnown(cwd = process.cwd()) {
+  return unknownWorkspaceInputs(cwd).length === 0;
+}
+
+export function unknownWorkspaceInputs(cwd = process.cwd()) {
   try {
     const status = execFileSync("git", ["status", "--porcelain=v1", "-z", "--untracked-files=all", "--ignored=matching"], {
       encoding: "buffer",
       stdio: ["ignore", "pipe", "pipe"],
       cwd,
     }).toString("utf8");
+    const unknown = [];
     for (const entry of status.split("\0")) {
       if (!entry) continue;
       const state = entry.slice(0, 2);
       const path = entry.slice(3);
       if (state === "!!" && (knownBuildCachePaths.has(path) || path === "amplify_outputs.json")) continue;
-      return false;
+      unknown.push(`${state} ${path}`);
     }
-    return true;
+    return unknown;
   } catch {
-    return false;
+    return ["unable to inspect Git workspace status"];
   }
 }
 
@@ -323,8 +328,12 @@ export function main(env = process.env) {
     throw new Error("Refusing main deployment because the checkout does not match the Amplify job commit.");
   }
 
-  if (!workspaceInputsAreKnown()) {
-    console.log("Backend deployment required: the build workspace contains unknown or modified inputs.");
+  const unknownInputs = unknownWorkspaceInputs();
+  if (unknownInputs.length > 0) {
+    const displayedInputs = unknownInputs.slice(0, 10).map((input) => JSON.stringify(input)).join(", ");
+    const remainingCount = unknownInputs.length - 10;
+    const additionalInputs = remainingCount > 0 ? ` and ${remainingCount} more` : "";
+    console.log(`Backend deployment required: unknown or modified build workspace inputs: ${displayedInputs}${additionalInputs}.`);
     deployMainBackend();
     return "deployed";
   }
