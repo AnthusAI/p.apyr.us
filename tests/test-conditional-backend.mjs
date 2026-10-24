@@ -46,7 +46,7 @@ try {
   const baselineCommit = git("rev-parse", "HEAD");
   const baseline = fingerprintTree(baselineCommit, {}, repository);
   assert.equal(workspaceInputsAreKnown(repository), true);
-  writeFileSync(join(repository, "amplify.sh"), "#!/bin/sh\necho build\n");
+  writeFileSync(join(repository, "amplify.sh"), "missing");
   assert.equal(workspaceInputsAreKnown(repository), true);
   assert.deepEqual(unknownWorkspaceInputs(repository), []);
   const wrapperFingerprint = fingerprintTree(baselineCommit, {}, repository);
@@ -54,6 +54,7 @@ try {
   writeFileSync(join(repository, "amplify.sh"), "#!/bin/sh\necho changed build\n");
   assert.notEqual(fingerprintTree(baselineCommit, {}, repository), wrapperFingerprint);
   rmSync(join(repository, "amplify.sh"));
+  assert.equal(fingerprintTree(baselineCommit, {}, repository), baseline);
   mkdirSync(join(repository, ".next/cache"), { recursive: true });
   writeFileSync(join(repository, ".next/cache/build-data"), "cached\n");
   mkdirSync(join(repository, ".npm"), { recursive: true });

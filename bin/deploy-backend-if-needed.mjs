@@ -112,12 +112,12 @@ export function fingerprintTree(commit = "HEAD", env = process.env, cwd = proces
   const amplifyWrapperPath = join(cwd, "amplify.sh");
   try {
     if (!lstatSync(amplifyWrapperPath).isFile()) throw new Error("Amplify build wrapper is not a regular file");
-    hash.update("amplify-build-wrapper\0");
+    hash.update("amplify-build-wrapper\0present-file\0");
     hash.update(readFileSync(amplifyWrapperPath));
     hash.update("\0");
   } catch (error) {
     if (error?.code !== "ENOENT") throw error;
-    hash.update("amplify-build-wrapper\0missing\0");
+    hash.update("amplify-build-wrapper\0absent\0");
   }
 
   const papyrusPackage = join(cwd, "node_modules/@anthusai/papyrus");
