@@ -12,8 +12,13 @@ corpora:
   localClassifiers:
   - classifierId: p-apyr-us
     label: Information Systems Topics
+- key: ai-ml-research
+  name: AI/ML Research Corpus
+  path: corpora/ai-ml-research
+  role: source
 relevanceCyclotron:
   cyclotronId: papyrus-relevance
+  corpusKey: ai-ml-research
   classifierId: relevant
   question: Should this candidate source become a reference for this publication?
   labels:
