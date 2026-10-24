@@ -116,9 +116,18 @@ export function makeMarker({ fingerprint, commit, jobId, jobStartTime }) {
     branch: "main",
     backendFingerprint: fingerprint,
     commit,
-    jobId: String(jobId),
+    jobId: normalizeJobId(jobId),
     jobStartTime,
   };
+}
+
+export function normalizeJobId(jobId) {
+  const value = String(jobId ?? "");
+  return /^\d+$/.test(value) ? value.replace(/^0+(?=\d)/, "") : value;
+}
+
+function sameJobId(left, right) {
+  return normalizeJobId(left) === normalizeJobId(right);
 }
 
 export function isMatchingMarker(value, { fingerprint, commit }, cwd = process.cwd()) {
@@ -162,10 +171,10 @@ export function jobsAllowSkip({ markerValue, currentJobId, jobs, hasMoreJobs = f
   for (const job of jobs) {
     const jobStartTime = toEpoch(job?.startTime);
     if (!job?.jobId || !job?.status || !Number.isFinite(jobStartTime)) return false;
-    if (String(job.jobId) === String(currentJobId)) {
+    if (sameJobId(job.jobId, currentJobId)) {
       if (job.status !== "RUNNING") return false;
       currentJobFound = true;
-    } else if (String(job.jobId) === String(marker.jobId)) {
+    } else if (sameJobId(job.jobId, marker.jobId)) {
       if (job.status !== "SUCCEED" || jobStartTime !== marker.jobStartTime) return false;
       markerJobFound = true;
     } else if (!terminalStates.has(job.status)) {
@@ -234,9 +243,9 @@ function listMainJobs() {
 
 function currentJobIsOnlyActive(jobs, currentJobId) {
   if (!Array.isArray(jobs)) return false;
-  const current = jobs.find((job) => String(job?.jobId) === String(currentJobId));
+  const current = jobs.find((job) => sameJobId(job?.jobId, currentJobId));
   if (!current || current.status !== "RUNNING") return false;
-  return jobs.every((job) => String(job?.jobId) === String(currentJobId) || ["SUCCEED", "FAILED", "CANCELLED"].includes(job?.status));
+  return jobs.every((job) => sameJobId(job?.jobId, currentJobId) || ["SUCCEED", "FAILED", "CANCELLED"].includes(job?.status));
 }
 
 function mainJobsAreSerialized(currentJobId) {
@@ -339,7 +348,7 @@ export function main(env = process.env) {
     currentJobId: env.AWS_JOB_ID,
     jobs,
   })) {
-    const currentJob = jobs.find((job) => String(job.jobId) === String(env.AWS_JOB_ID));
+    const currentJob = jobs.find((job) => sameJobId(job.jobId, env.AWS_JOB_ID));
     const currentJobStartTime = typeof currentJob.startTime === "number" ? currentJob.startTime : Date.parse(currentJob.startTime);
     try {
       writeMarker(makeMarker({ fingerprint, commit: head, jobId: env.AWS_JOB_ID, jobStartTime: currentJobStartTime }));
@@ -355,7 +364,7 @@ export function main(env = process.env) {
   if (!currentJobIsOnlyActive(currentJobs, env.AWS_JOB_ID)) {
     throw new Error("Refusing main deployment because another job is active or the complete job queue could not be verified.");
   }
-  const currentJob = Array.isArray(currentJobs) ? currentJobs.find((job) => String(job.jobId) === String(env.AWS_JOB_ID)) : null;
+  const currentJob = Array.isArray(currentJobs) ? currentJobs.find((job) => sameJobId(job.jobId, env.AWS_JOB_ID)) : null;
   const currentJobStartTime = typeof currentJob?.startTime === "number" ? currentJob.startTime : Date.parse(currentJob?.startTime);
   deployMainBackend({ fingerprint, commit: head, jobId: env.AWS_JOB_ID, jobStartTime: currentJobStartTime });
   return "deployed";

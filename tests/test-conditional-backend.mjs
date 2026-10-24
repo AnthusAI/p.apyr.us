@@ -11,6 +11,7 @@ import {
   isMatchingMarker,
   canSkipBackend,
   makeMarker,
+  normalizeJobId,
   workspaceInputsAreKnown,
 } from "../bin/deploy-backend-if-needed.mjs";
 
@@ -83,7 +84,9 @@ try {
   assert.equal(workspaceInputsAreKnown(repository), false);
   rmSync(join(repository, "unexpected.generated"));
 
-  const marker = makeMarker({ fingerprint: baseline, commit: baselineCommit, jobId: "job-previous", jobStartTime: 1000 });
+  const marker = makeMarker({ fingerprint: baseline, commit: baselineCommit, jobId: "0000000010", jobStartTime: 1000 });
+  assert.equal(normalizeJobId("0000000001"), "1");
+  assert.equal(normalizeJobId("job-current"), "job-current");
   assert.equal(marker.schemaVersion, MARKER_VERSION);
   assert.equal(marker.accountId, ACCOUNT_ID);
   assert.equal(marker.appId, APP_ID);
@@ -99,10 +102,10 @@ try {
     markerValue: marker,
     fingerprint: afterFrontendFingerprint,
     commit: frontendCommit,
-    currentJobId: "job-current",
+    currentJobId: "0000000001",
     jobs: [
-      { jobId: "job-current", status: "RUNNING", startTime: "1970-01-01T00:00:02.000Z" },
-      { jobId: "job-previous", status: "SUCCEED", startTime: "1970-01-01T00:00:01.000Z" },
+      { jobId: "1", status: "RUNNING", startTime: "1970-01-01T00:00:02.000Z" },
+      { jobId: "10", status: "SUCCEED", startTime: "1970-01-01T00:00:01.000Z" },
       { jobId: "job-older", status: "SUCCEED", startTime: "1970-01-01T00:00:00.500Z" },
     ],
     cwd: repository,
@@ -111,7 +114,7 @@ try {
   assert.equal(canSkipBackend({ ...safeToSkip, jobs: [...safeToSkip.jobs, { jobId: "job-other", status: "PENDING", startTime: "1970-01-01T00:00:02.100Z" }] }), false);
   assert.equal(canSkipBackend({ ...safeToSkip, jobs: [{ jobId: "other-job", status: "RUNNING", startTime: "1970-01-01T00:00:02.000Z" }] }), false);
   assert.equal(canSkipBackend({ ...safeToSkip, jobs: [...safeToSkip.jobs, { jobId: "unguarded-success", status: "SUCCEED", startTime: "1970-01-01T00:00:01.500Z" }] }), false);
-  assert.equal(canSkipBackend({ ...safeToSkip, jobs: safeToSkip.jobs.filter((job) => job.jobId !== "job-previous") }), false);
+  assert.equal(canSkipBackend({ ...safeToSkip, jobs: safeToSkip.jobs.filter((job) => job.jobId !== "10") }), false);
   assert.equal(canSkipBackend({ ...safeToSkip, hasMoreJobs: true }), false);
   assert.equal(canSkipBackend({ ...safeToSkip, markerValue: null }), false);
 
