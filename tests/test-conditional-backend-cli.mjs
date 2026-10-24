@@ -29,11 +29,11 @@ if (args[0] === "amplify" && args[1] === "list-jobs") {
   const currentJobId = String(process.env.AWS_JOB_ID).replace(/^0+(?=\\d)/, "");
   if (process.env.PAGINATE === "1") {
     if (args.includes("--next-token")) process.stdout.write(JSON.stringify({ jobSummaries: [{ jobId: "later-active", status: "RUNNING" }] }));
-    else process.stdout.write(JSON.stringify({ jobSummaries: [{ jobId: currentJobId, status: "RUNNING", startTime: "2026-10-23T21:00:02.000Z" }], nextToken: "second-page" }));
+    else process.stdout.write(JSON.stringify({ jobSummaries: [{ jobId: currentJobId, status: "RUNNING", startTime: "2026-10-23T21:00:02.000Z", commitId: process.env.FAKE_COMMIT_ID }], nextToken: "second-page" }));
   } else {
     const markerPath = join(state, "marker.json");
     const marker = existsSync(markerPath) ? JSON.parse(readFileSync(markerPath, "utf8")) : null;
-    const jobs = [{ jobId: currentJobId, status: "RUNNING", startTime: "2026-10-23T21:00:02.000Z" }];
+    const jobs = [{ jobId: currentJobId, status: "RUNNING", startTime: "2026-10-23T21:00:02.000Z", commitId: process.env.FAKE_COMMIT_ID }];
     if (marker?.jobId) jobs.push({ jobId: String(marker.jobId).replace(/^0+(?=\\d)/, ""), status: "SUCCEED", startTime: new Date(marker.jobStartTime).toISOString() });
     if (process.env.PAGINATE_SUCCESS === "1") {
       if (args.includes("--next-token")) process.stdout.write(JSON.stringify({ jobSummaries: [{ jobId: "older-terminal", status: "FAILED", startTime: "2026-10-23T20:00:00.000Z" }] }));
@@ -117,6 +117,7 @@ function childEnv(cwd, overrides = {}) {
     AWS_BRANCH: "main",
     AWS_JOB_ID: "0000000001",
     AWS_COMMIT_ID: git(cwd, "rev-parse", "HEAD"),
+    FAKE_COMMIT_ID: git(cwd, "rev-parse", "HEAD"),
     AWS_REGION: "us-east-1",
     ...overrides,
   };
@@ -160,6 +161,16 @@ try {
   assert.equal(recovery.status, 0, recovery.stderr);
   assert.deepEqual(loggedNpxCalls().map((call) => call[0] === "papyrus-infra" ? "edge" : call[1]), ["edge", "pipeline-deploy"]);
   assert.equal(JSON.parse(readFileSync(markerPath, "utf8")).backendFingerprint, fingerprintTree(reverted, { ...process.env, AWS_REGION: "us-east-1" }, cwd));
+  assert.equal(JSON.parse(readFileSync(markerPath, "utf8")).commit, reverted, "successful deployment records the commit from the Amplify job summary");
+
+  clearState();
+  git(cwd, "checkout", "--detach", changed);
+  writeMarker(cwd, initial);
+  const backendDeployWithoutCommitEnvironment = runHelper(cwd, { AWS_COMMIT_ID: "" });
+  assert.equal(backendDeployWithoutCommitEnvironment.status, 0, backendDeployWithoutCommitEnvironment.stderr);
+  assert.deepEqual(loggedNpxCalls().map((call) => call[0] === "papyrus-infra" ? "edge" : call[1]), ["edge", "pipeline-deploy"]);
+  assert.equal(JSON.parse(readFileSync(markerPath, "utf8")).schemaVersion, 1);
+  assert.equal(JSON.parse(readFileSync(markerPath, "utf8")).commit, changed, "full deployment can record a success marker from the authoritative job summary without AWS_COMMIT_ID");
 
   clearState();
   git(cwd, "checkout", "--detach", changed);
@@ -190,6 +201,20 @@ try {
   assert.equal(skip.status, 0, skip.stderr);
   assert.match(skip.stdout, /deployment skipped/);
   assert.equal(loggedNpxCalls().length, 0);
+
+  clearState();
+  writeMarker(cwd, changed);
+  const missingCommitEnvironment = runHelper(cwd, { AWS_COMMIT_ID: "" });
+  assert.equal(missingCommitEnvironment.status, 0, missingCommitEnvironment.stderr);
+  assert.match(missingCommitEnvironment.stdout, /deployment skipped/);
+  assert.equal(JSON.parse(readFileSync(markerPath, "utf8")).commit, changed);
+
+  clearState();
+  writeMarker(cwd, changed);
+  const mismatchedCommitEnvironment = runHelper(cwd, { AWS_COMMIT_ID: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" });
+  assert.notEqual(mismatchedCommitEnvironment.status, 0);
+  assert.equal(loggedNpxCalls().length, 0, "mismatched commit identity aborts before mutation");
+  assert.equal(JSON.parse(readFileSync(markerPath, "utf8")).backendFingerprint, fingerprintTree(changed, { ...process.env, AWS_REGION: "us-east-1" }, cwd));
 
   clearState();
   writeMarker(cwd, changed);
