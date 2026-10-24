@@ -20,6 +20,7 @@ export const metadata: Metadata = {
 
 const READER_HOST_PREFIX = "read.";
 
+
 type RootProps = Parameters<typeof PapyrusReaderHome>[0];
 
 export default async function Root(props: RootProps) {
