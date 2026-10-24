@@ -150,6 +150,30 @@ function loggedNpxCalls() {
 
 try {
   const { cwd, initial, changed } = createRepository();
+  const absentWrapperMarker = writeMarker(cwd, changed);
+  writeFileSync(join(cwd, "amplify.sh"), "missing");
+  const wrapperAdded = runHelper(cwd, { AWS_JOB_ID: "0000000002" });
+  assert.equal(wrapperAdded.status, 0, wrapperAdded.stderr);
+  assert.doesNotMatch(wrapperAdded.stdout, /deployment skipped/);
+  assert.deepEqual(loggedNpxCalls().map((call) => call[0] === "papyrus-infra" ? "edge" : call[1]), ["edge", "pipeline-deploy"]);
+  assert.notEqual(JSON.parse(readFileSync(markerPath, "utf8")).backendFingerprint, absentWrapperMarker.backendFingerprint);
+
+  rmSync(npmLog, { force: true });
+  const wrapperSkip = runHelper(cwd, { AWS_JOB_ID: "0000000003" });
+  assert.equal(wrapperSkip.status, 0, wrapperSkip.stderr);
+  assert.match(wrapperSkip.stdout, /Backend and edge deployment skipped/);
+  assert.equal(loggedNpxCalls().length, 0);
+  assert.equal(JSON.parse(readFileSync(markerPath, "utf8")).jobId, "3");
+
+  writeFileSync(join(cwd, "amplify.sh"), "#!/bin/sh\necho changed build\n");
+  rmSync(npmLog, { force: true });
+  const wrapperChange = runHelper(cwd, { AWS_JOB_ID: "0000000004" });
+  assert.equal(wrapperChange.status, 0, wrapperChange.stderr);
+  assert.deepEqual(loggedNpxCalls().map((call) => call[0] === "papyrus-infra" ? "edge" : call[1]), ["edge", "pipeline-deploy"]);
+  assert.equal(JSON.parse(readFileSync(markerPath, "utf8")).backendFingerprint, fingerprintTree(changed, { ...process.env, AWS_REGION: "us-east-1" }, cwd));
+
+  clearState();
+  rmSync(join(cwd, "amplify.sh"));
   writeMarker(cwd, initial);
 
   const failedBackend = runHelper(cwd, { FAIL_PIPELINE: "1" });
