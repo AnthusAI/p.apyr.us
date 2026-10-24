@@ -15,6 +15,7 @@ const npxPath = join(fakeBin, "npx");
 const markerPath = join(state, "marker.json");
 const npmLog = join(state, "npx.jsonl");
 const putCountPath = join(state, "put-count");
+const listCountPath = join(state, "list-count");
 
 mkdirSync(fakeBin, { recursive: true });
 mkdirSync(state, { recursive: true });
@@ -26,6 +27,8 @@ const args = process.argv.slice(2);
 const state = process.env.FAKE_STATE;
 if (args[0] === "sts") { process.stdout.write("712236451410\\n"); process.exit(0); }
 if (args[0] === "amplify" && args[1] === "list-jobs") {
+  const listCount = Number(existsSync(process.env.LIST_COUNT_PATH) ? readFileSync(process.env.LIST_COUNT_PATH, "utf8") : "0") + 1;
+  writeFileSync(process.env.LIST_COUNT_PATH, String(listCount));
   const currentJobId = String(process.env.AWS_JOB_ID).replace(/^0+(?=\\d)/, "");
   if (process.env.PAGINATE === "1") {
     if (args.includes("--next-token")) process.stdout.write(JSON.stringify({ jobSummaries: [{ jobId: "later-active", status: "RUNNING" }] }));
@@ -35,6 +38,9 @@ if (args[0] === "amplify" && args[1] === "list-jobs") {
     const marker = existsSync(markerPath) ? JSON.parse(readFileSync(markerPath, "utf8")) : null;
     const jobs = [{ jobId: currentJobId, status: "RUNNING", startTime: "2026-10-23T21:00:02.000Z", commitId: process.env.FAKE_COMMIT_ID }];
     if (marker?.jobId) jobs.push({ jobId: String(marker.jobId).replace(/^0+(?=\\d)/, ""), status: "SUCCEED", startTime: new Date(marker.jobStartTime).toISOString() });
+    if (process.env.DUPLICATE_CURRENT_JOB === "first" || (process.env.DUPLICATE_CURRENT_JOB === "second" && listCount === 2)) {
+      jobs.push({ jobId: "00000000" + currentJobId, status: "FAILED", startTime: "2026-10-23T21:00:03.000Z", commitId: "aaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaaa" });
+    }
     if (process.env.PAGINATE_SUCCESS === "1") {
       if (args.includes("--next-token")) process.stdout.write(JSON.stringify({ jobSummaries: [{ jobId: "older-terminal", status: "FAILED", startTime: "2026-10-23T20:00:00.000Z" }] }));
       else process.stdout.write(JSON.stringify({ jobSummaries: jobs, nextToken: "second-page" }));
@@ -112,6 +118,7 @@ function childEnv(cwd, overrides = {}) {
     ...process.env,
     PATH: fakeBin + ":" + process.env.PATH,
     FAKE_STATE: state,
+    LIST_COUNT_PATH: listCountPath,
     NPX_LOG: npmLog,
     AWS_APP_ID: "ds6yswxui41yi",
     AWS_BRANCH: "main",
@@ -124,7 +131,7 @@ function childEnv(cwd, overrides = {}) {
 }
 
 function clearState() {
-  for (const path of [markerPath, npmLog, putCountPath]) {
+  for (const path of [markerPath, npmLog, putCountPath, listCountPath]) {
     if (existsSync(path)) rmSync(path);
   }
 }
@@ -194,6 +201,21 @@ try {
   assert.notEqual(paginatedConcurrency.status, 0);
   assert.equal(loggedNpxCalls().length, 0);
   assert.equal(JSON.parse(readFileSync(markerPath, "utf8")).backendFingerprint, fingerprintTree(changed, { ...process.env, AWS_REGION: "us-east-1" }, cwd));
+
+  clearState();
+  const firstReadMarker = writeMarker(cwd, changed);
+  const duplicateCurrentJobOnFirstRead = runHelper(cwd, { DUPLICATE_CURRENT_JOB: "first" });
+  assert.notEqual(duplicateCurrentJobOnFirstRead.status, 0);
+  assert.equal(loggedNpxCalls().length, 0, "conflicting duplicate current-job records reject before deployment");
+  assert.deepEqual(JSON.parse(readFileSync(markerPath, "utf8")), firstReadMarker, "the marker remains unchanged when the first history read is ambiguous");
+
+  clearState();
+  git(cwd, "checkout", "--detach", changed);
+  const secondReadMarker = writeMarker(cwd, initial);
+  const duplicateCurrentJobOnSecondRead = runHelper(cwd, { DUPLICATE_CURRENT_JOB: "second" });
+  assert.notEqual(duplicateCurrentJobOnSecondRead.status, 0);
+  assert.equal(loggedNpxCalls().length, 0, "conflicting duplicate current-job records reject before backend mutation");
+  assert.deepEqual(JSON.parse(readFileSync(markerPath, "utf8")), secondReadMarker, "the marker remains unchanged when the second history read is ambiguous");
 
   clearState();
   writeMarker(cwd, changed);

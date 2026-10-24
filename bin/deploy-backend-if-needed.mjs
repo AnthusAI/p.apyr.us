@@ -243,8 +243,8 @@ function listMainJobs() {
 
 function currentJobIsOnlyActive(jobs, currentJobId) {
   if (!Array.isArray(jobs)) return false;
-  const current = jobs.find((job) => sameJobId(job?.jobId, currentJobId));
-  if (!current || current.status !== "RUNNING") return false;
+  const currentJobs = jobs.filter((job) => sameJobId(job?.jobId, currentJobId));
+  if (currentJobs.length !== 1 || currentJobs[0].status !== "RUNNING") return false;
   return jobs.every((job) => sameJobId(job?.jobId, currentJobId) || ["SUCCEED", "FAILED", "CANCELLED"].includes(job?.status));
 }
 
