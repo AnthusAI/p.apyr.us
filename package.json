@@ -31,6 +31,9 @@
   "overrides": {
     "@aws-cdk/toolkit-lib": "1.32.0",
     "@opentelemetry/core": "2.11.0",
-    "zod": "$zod"
+    "zod": "$zod",
+    "chatticus@0.51.0": {
+      "zod": "4.6.5"
+    }
   }
 }
