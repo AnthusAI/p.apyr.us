@@ -60,6 +60,9 @@ export default defineSite({
       reprojectOnDeploy: true,
       edgeDistributionArn: "arn:aws:cloudfront::712236451410:distribution/E2EM0JLBC2W9WW",
     },
+    monitoring: {
+      emailMonitorId: "p-apyr-us-email",
+    },
     stagingBuild: { enabled: true },
     features: {
       consoleResponder: false,
