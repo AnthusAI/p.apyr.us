@@ -29,6 +29,13 @@
     },
     "prospectusAccountsApiStageArn": "arn:aws:execute-api:us-east-1:712236451410:bnh9mctvo9/api"
   },
+  "chat": {
+    "enabled": true,
+    "modelKeyParameter": "/papyrus/p-apyr-us/openai-api-key",
+    "stackName": "PapyrusChatDataCandidate",
+    "logGroupPrefix": "/aws/lambda/papyrus-private-chat",
+    "workerCodeS3Key": "00f9c8bffaac1e4710b7a78f1afa4455e2fd3a0900d04aab68a5e69d2d32f9eb.zip"
+  },
   "github": {
     "owner": "AnthusAI",
     "repo": "p.apyr.us",
