@@ -15,3 +15,9 @@ allow:
     kind: "Bare UUID (potential session/agent identifier)"
     reason: "CloudFront key-value-store id and the AWS managed CachingOptimized cache policy id: public resource identifiers, not session identifiers"
     added: 2026-10-21
+  - id: "2acc2d528af38666"
+    rule: "generic-api-key"
+    file: "infra/site.json"
+    kind: "Detected a Generic API Key, potentially exposing access to various services and "
+    reason: "workerCodeS3Key is the SHA-256 object key of a published Lambda worker zip, not a credential; same reviewed override as Papyrus PR 782"
+    added: 2026-10-27

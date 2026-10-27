@@ -6,7 +6,7 @@
   "frontend": "pretext",
   "aws": { "profile": "papyrus-production", "accountId": "712236451410", "region": "us-east-1" },
   "hostedZoneId": "Z10285921B1G7MVRV06W9",
-  "papyrusVersion": "5.43.0",
+  "papyrusVersion": "5.44.0",
   "cms": {
     "domainName": "apyr.us",
     "domainPrefix": "p",
@@ -28,6 +28,13 @@
       "PAPYRUS_OAUTH_REDIRECT_URLS": "https://main.ds6yswxui41yi.amplifyapp.com/newsroom,https://main.ds6yswxui41yi.amplifyapp.com/,http://localhost:3001/,http://localhost:3001/newsroom,https://p.apyr.us/,https://p.apyr.us/newsroom,https://p-staging.apyr.us/,https://p-staging.apyr.us/newsroom"
     },
     "prospectusAccountsApiStageArn": "arn:aws:execute-api:us-east-1:712236451410:bnh9mctvo9/api"
+  },
+  "chat": {
+    "enabled": true,
+    "modelKeyParameter": "/papyrus/p-apyr-us/openai-api-key",
+    "stackName": "PapyrusChatDataCandidate",
+    "logGroupPrefix": "/aws/lambda/papyrus-private-chat",
+    "workerCodeS3Key": "00f9c8bffaac1e4710b7a78f1afa4455e2fd3a0900d04aab68a5e69d2d32f9eb.zip"
   },
   "github": {
     "owner": "AnthusAI",
