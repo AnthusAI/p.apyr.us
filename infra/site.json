@@ -6,7 +6,7 @@
   "frontend": "pretext",
   "aws": { "profile": "papyrus-production", "accountId": "712236451410", "region": "us-east-1" },
   "hostedZoneId": "Z10285921B1G7MVRV06W9",
-  "papyrusVersion": "5.51.0",
+  "papyrusVersion": "5.52.0",
   "cms": {
     "domainName": "apyr.us",
     "domainPrefix": "p",
