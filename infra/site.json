@@ -10,7 +10,7 @@
     "region": "us-east-1"
   },
   "hostedZoneId": "Z10285921B1G7MVRV06W9",
-  "papyrusVersion": "5.62.1",
+  "papyrusVersion": "5.63.0",
   "cms": {
     "domainName": "apyr.us",
     "domainPrefix": "p",
